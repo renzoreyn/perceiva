@@ -4,13 +4,15 @@ import { useState } from "react";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { SUPPORTED_CURRENCIES, CURRENCY_LABELS } from "@/lib/currency";
 
+type ActionResult =
+  | { success: true; error?: never }
+  | { success: false; error: string };
+
 type AuthMode = "login" | "register";
 
 interface AuthFormProps {
   mode: AuthMode;
-  action: (
-    formData: FormData
-  ) => Promise<{ success: false; error: string } | undefined>;
+  action: (formData: FormData) => Promise<ActionResult | undefined>;
 }
 
 function InputField({

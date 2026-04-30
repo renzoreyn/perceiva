@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { RegisterSchema, LoginSchema } from "@/lib/validations";
 
 type ActionResult =
-  | { success: true }
+  | { success: true; error?: never }
   | { success: false; error: string };
 
 export async function register(
