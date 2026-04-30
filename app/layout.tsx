@@ -1,29 +1,28 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Geist, Outfit } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const geist = Geist({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-geist",
   display: "swap",
 });
 
-const playfair = Playfair_Display({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-playfair",
+  variable: "--font-outfit",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Perceiva — See Your Money in Its Real Value",
+    default: "Perceiva",
     template: "%s | Perceiva",
   },
   description:
-    "Perceiva corrects currency perception so you never misjudge your spending again. Multi-currency finance tracking with live normalization.",
-  robots: { index: false, follow: false }, // Private app
+    "Stop misjudging your spending across currencies. Perceiva converts everything to your base currency in real time so you always know what things actually cost.",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({
@@ -32,8 +31,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <body className="noise-overlay">{children}</body>
+    <html lang="en" className={`${geist.variable} ${outfit.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED = ["/dashboard", "/transactions", "/insights", "/settings"];
+const PROTECTED = ["/dashboard", "/transactions", "/insights", "/settings", "/trips"];
 const AUTH_ONLY = ["/login", "/register"];
 
 export function middleware(request: NextRequest) {
@@ -15,11 +15,9 @@ export function middleware(request: NextRequest) {
   if (needsAuth && !isAuthed) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
-
   if (isAuthPage && isAuthed) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
-
   return NextResponse.next();
 }
 

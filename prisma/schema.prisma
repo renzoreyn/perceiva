@@ -16,19 +16,18 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  transactions  Transaction[]
-  monthlyRecaps MonthlyRecap[]
-  sessions      Session[]
-
-  @@map("users")
+  transactions   Transaction[]
+  monthlyRecaps  MonthlyRecap[]
+  sessions       Session[]
+  budgetGoals    BudgetGoal[]
+  trips          Trip[]
 }
 
 model Session {
   id        String   @id
   userId    String
   expiresAt DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
@@ -44,15 +43,54 @@ model Transaction {
   baseCurrency     Currency
   category         Category
   description      String?
+  isRecurring      Boolean         @default(false)
+  recurringFreq    RecurringFreq?
+  tripId           String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip Trip? @relation(fields: [tripId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([userId, createdAt])
   @@index([userId, type])
+  @@index([userId, tripId])
   @@map("transactions")
+}
+
+model BudgetGoal {
+  id          String   @id @default(cuid())
+  userId      String
+  category    Category
+  limitAmount Decimal  @db.Decimal(18, 4)
+  currency    Currency
+  period      String   @default("monthly")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+  @@map("budget_goals")
+}
+
+model Trip {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  description  String?
+  baseCurrency Currency
+  startDate    DateTime?
+  endDate      DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("trips")
 }
 
 model MonthlyRecap {
@@ -103,4 +141,10 @@ enum Category {
   income_freelance
   income_other
   other
+}
+
+enum RecurringFreq {
+  daily
+  weekly
+  monthly
 }

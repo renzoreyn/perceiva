@@ -10,49 +10,35 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        playfair: ["var(--font-playfair)", "serif"],
-        sans: ["var(--font-inter)", "sans-serif"],
+        sans: ["var(--font-geist)", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        display: ["var(--font-outfit)", "Outfit", "sans-serif"],
       },
       colors: {
-        bg: {
-          DEFAULT: "#141416",
-          deep: "#0e0e10",
-        },
-        surface: {
-          DEFAULT: "#1c1c20",
-          raised: "#222228",
-          high: "#2a2a32",
-        },
+        bg: { DEFAULT: "#08080f", deep: "#050508" },
+        glass: "rgba(255,255,255,0.042)",
         primary: {
           DEFAULT: "#6b8fd4",
-          muted: "rgba(107,143,212,0.15)",
           hover: "#7da0de",
+          muted: "rgba(107,143,212,0.15)",
         },
-        "text-primary": "#f0f0f4",
-        "text-secondary": "#8b8b9a",
-        "text-dim": "#555564",
-        "text-accent": "#afc3ed",
-        success: "#4caf7d",
-        danger: "#e06b6b",
+        violet: { DEFAULT: "#9b7fe8", muted: "rgba(155,127,232,0.13)" },
+        success: "#3db87a",
+        danger: "#e05c5c",
         gold: "#c9aa71",
       },
-      borderRadius: {
-        lg: "12px",
-        xl: "16px",
-        "2xl": "20px",
-      },
+      borderRadius: { xl: "16px", "2xl": "20px" },
       animation: {
-        "fade-in": "fadeIn 0.3s ease",
-        "scale-in": "scaleIn 0.25s ease",
+        "scale-in": "scale-in 0.22s cubic-bezier(0.34, 1.2, 0.64, 1) forwards",
+        "fade-up": "fade-up 0.5s ease forwards",
       },
       keyframes: {
-        fadeIn: {
-          from: { opacity: "0" },
-          to: { opacity: "1" },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.95) translateY(10px)" },
+          to: { opacity: "1", transform: "scale(1) translateY(0)" },
         },
-        scaleIn: {
-          from: { opacity: "0", transform: "scale(0.96)" },
-          to: { opacity: "1", transform: "scale(1)" },
+        "fade-up": {
+          from: { opacity: "0", transform: "translateY(18px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
         },
       },
     },
