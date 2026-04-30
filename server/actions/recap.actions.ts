@@ -8,7 +8,6 @@ import {
   subMonths,
   format,
 } from "date-fns";
-import type { Prisma } from "@prisma/client";
 
 export interface CategoryInsight {
   category: string;
@@ -79,6 +78,7 @@ export async function generateMonthlyRecap(
 
   const baseCurrency = dbUser.baseCurrency;
 
+  // Return cached recap if it exists
   const cached = await prisma.monthlyRecap.findUnique({
     where: {
       userId_year_month: {
@@ -96,7 +96,10 @@ export async function generateMonthlyRecap(
       data: {
         year: cached.year,
         month: cached.month,
-        monthLabel: format(new Date(cached.year, cached.month - 1), "MMMM yyyy"),
+        monthLabel: format(
+          new Date(cached.year, cached.month - 1),
+          "MMMM yyyy"
+        ),
         totalIncome: Number(cached.totalIncome),
         totalExpense: Number(cached.totalExpense),
         netBalance: Number(cached.netBalance),
@@ -110,6 +113,7 @@ export async function generateMonthlyRecap(
     };
   }
 
+  // Build fresh recap
   const [incomeAgg, expenseAgg] = await Promise.all([
     prisma.transaction.aggregate({
       where: { userId: user.id, type: "income", createdAt: { gte: from, lte: to } },
@@ -126,6 +130,7 @@ export async function generateMonthlyRecap(
   const netBalance = totalIncome - totalExpense;
   const savingsRate = totalIncome > 0 ? (netBalance / totalIncome) * 100 : 0;
 
+  // Category breakdown
   const catRows = await prisma.transaction.groupBy({
     by: ["category"],
     where: { userId: user.id, type: "expense", createdAt: { gte: from, lte: to } },
@@ -135,14 +140,17 @@ export async function generateMonthlyRecap(
   });
 
   const topCategories: CategoryInsight[] = catRows.map((c) => ({
-    category: c.category as string,
+    category: c.category,
     total: Number(c._sum.convertedAmount ?? 0),
     percentage:
       totalExpense > 0
-        ? Math.round((Number(c._sum.convertedAmount ?? 0) / totalExpense) * 100)
+        ? Math.round(
+            (Number(c._sum.convertedAmount ?? 0) / totalExpense) * 100
+          )
         : 0,
   }));
 
+  // Currency distortion
   const currencyRows = await prisma.transaction.groupBy({
     by: ["currency"],
     where: {
@@ -155,7 +163,7 @@ export async function generateMonthlyRecap(
   });
 
   const distortionInsights: DistortionInsight[] = currencyRows.map((r) => ({
-    currency: r.currency as string,
+    currency: r.currency,
     totalOriginal: Number(r._sum.amount ?? 0),
     totalConverted: Number(r._sum.convertedAmount ?? 0),
     note:
@@ -163,6 +171,7 @@ export async function generateMonthlyRecap(
       `Spent in ${r.currency}, converted to ${baseCurrency}.`,
   }));
 
+  // Behavioral insights
   const behavioralInsights: BehavioralInsight[] = [];
 
   const allExpenses = await prisma.transaction.findMany({
@@ -204,6 +213,7 @@ export async function generateMonthlyRecap(
     }
   }
 
+  // Previous month comparison
   const prevDate = subMonths(targetDate, 1);
   const [prevIncomeAgg, prevExpenseAgg] = await Promise.all([
     prisma.transaction.aggregate({
@@ -232,17 +242,19 @@ export async function generateMonthlyRecap(
     incomeChange:
       prevIncome > 0 ? ((totalIncome - prevIncome) / prevIncome) * 100 : 0,
     expenseChange:
-      prevExpense > 0 ? ((totalExpense - prevExpense) / prevExpense) * 100 : 0,
+      prevExpense > 0
+        ? ((totalExpense - prevExpense) / prevExpense) * 100
+        : 0,
     netChange:
       prevNet !== 0 ? ((netBalance - prevNet) / Math.abs(prevNet)) * 100 : 0,
   };
 
   const insightsJson = {
-    topCategories: topCategories.map((c) => ({ ...c })),
-    distortionInsights: distortionInsights.map((d) => ({ ...d })),
-    behavioralInsights: behavioralInsights.map((b) => ({ ...b })),
+    topCategories,
+    distortionInsights,
+    behavioralInsights,
     vsLastMonth,
-  } satisfies Prisma.InputJsonValue;
+  };
 
   await prisma.monthlyRecap.upsert({
     where: {
@@ -263,13 +275,7 @@ export async function generateMonthlyRecap(
       baseCurrency: baseCurrency as any,
       insightsJson,
     },
-    update: {
-      totalIncome,
-      totalExpense,
-      netBalance,
-      savingsRate,
-      insightsJson,
-    },
+    update: { totalIncome, totalExpense, netBalance, savingsRate, insightsJson },
   });
 
   return {

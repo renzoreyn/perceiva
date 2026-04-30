@@ -4,15 +4,13 @@ import { useState } from "react";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { SUPPORTED_CURRENCIES, CURRENCY_LABELS } from "@/lib/currency";
 
-type ActionResult =
-  | { success: true; error?: never }
-  | { success: false; error: string };
-
 type AuthMode = "login" | "register";
 
 interface AuthFormProps {
   mode: AuthMode;
-  action: (formData: FormData) => Promise<ActionResult | undefined>;
+  action: (
+    formData: FormData
+  ) => Promise<{ success: false; error: string } | undefined>;
 }
 
 function InputField({
@@ -74,18 +72,14 @@ function InputField({
             type="button"
             onClick={() => setShowPw((v) => !v)}
             className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-            style={{
-              color: "var(--text-dim)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-            }}
+            style={{ color: "var(--text-dim)", background: "none", border: "none", cursor: "pointer" }}
             onMouseEnter={(e) =>
               ((e.currentTarget as HTMLElement).style.color =
                 "var(--text-secondary)")
             }
             onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLElement).style.color = "var(--text-dim)")
+              ((e.currentTarget as HTMLElement).style.color =
+                "var(--text-dim)")
             }
             tabIndex={-1}
             aria-label={showPw ? "Hide password" : "Show password"}
@@ -133,11 +127,7 @@ export default function AuthForm({ mode, action }: AuthFormProps) {
         label="Password"
         name="password"
         type="password"
-        placeholder={
-          mode === "register"
-            ? "Min. 8 chars, 1 uppercase, 1 number"
-            : "Your password"
-        }
+        placeholder={mode === "register" ? "Min. 8 chars, 1 uppercase, 1 number" : "Your password"}
       />
 
       {mode === "register" && (
@@ -167,7 +157,11 @@ export default function AuthForm({ mode, action }: AuthFormProps) {
             }}
           >
             {SUPPORTED_CURRENCIES.map((c) => (
-              <option key={c} value={c} style={{ background: "var(--bg)" }}>
+              <option
+                key={c}
+                value={c}
+                style={{ background: "var(--bg)" }}
+              >
                 {c} — {CURRENCY_LABELS[c]}
               </option>
             ))}
@@ -193,7 +187,7 @@ export default function AuthForm({ mode, action }: AuthFormProps) {
         type="submit"
         disabled={loading}
         className="w-full py-3 rounded-lg text-sm font-medium text-white transition-all mt-1 disabled:opacity-50"
-        style={{ background: "var(--primary)", border: "none", cursor: "pointer" }}
+        style={{ background: "var(--primary)" }}
         onMouseEnter={(e) => {
           if (!loading)
             (e.currentTarget as HTMLElement).style.background =

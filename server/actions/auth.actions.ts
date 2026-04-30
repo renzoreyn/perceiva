@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { RegisterSchema, LoginSchema } from "@/lib/validations";
 
 type ActionResult =
-  | { success: true; error?: never }
+  | { success: true }
   | { success: false; error: string };
 
 export async function register(
@@ -82,6 +82,7 @@ export async function login(formData: FormData): Promise<ActionResult> {
 
   const user = await prisma.user.findUnique({ where: { email } });
 
+  // Always hash to prevent timing attacks regardless of user existence
   const DUMMY_HASH =
     "$2b$12$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
   const hashToCompare = user?.passwordHash ?? DUMMY_HASH;
