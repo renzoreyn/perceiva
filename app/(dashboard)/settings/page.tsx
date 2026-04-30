@@ -16,6 +16,5 @@ export default async function SettingsPage() {
   });
 
   if (!dbUser) redirect("/login");
-
   return <SettingsClient user={dbUser} />;
 }
