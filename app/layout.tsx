@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import { Outfit, DM_Sans } from "next/font/google";
+import { Inter, Sora } from "next/font/google";
+import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import "./globals.css";
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-geist",
+  variable: "--font-body",
   display: "swap",
-  weight: ["300", "400", "500", "600"],
 });
 
-const outfit = Outfit({
+const sora = Sora({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  variable: "--font-display",
   display: "swap",
   weight: ["400", "500", "600", "700", "800"],
 });
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: "%s | Perceiva",
   },
   description:
-    "Stop misjudging your spending across currencies. Perceiva converts everything to your base currency in real time so you always know what things actually cost.",
+    "Stop misjudging your spending across currencies. Perceiva converts everything to your base currency in real time.",
   robots: { index: false, follow: false },
 };
 
@@ -32,8 +32,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${outfit.variable}`}>
-      <body>{children}</body>
+    <html lang="en" className={`${inter.variable} ${sora.variable}`} suppressHydrationWarning>
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

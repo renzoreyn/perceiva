@@ -52,10 +52,10 @@ export default function SettingsClient({ user }: Props) {
 
           <div style={{ marginBottom: "32px" }}>
             <h1 className="font-display text-3xl font-700 mb-1"
-              style={{ color: "var(--text-primary)", fontWeight: 700, letterSpacing: "-0.02em" }}>
+              style={{ color: "var(--t1)", fontWeight: 700, letterSpacing: "-0.02em" }}>
               Settings
             </h1>
-            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            <p className="text-sm" style={{ color: "var(--t2)" }}>
               Manage your account and preferences.
             </p>
           </div>
@@ -64,7 +64,7 @@ export default function SettingsClient({ user }: Props) {
 
             {/* Profile */}
             <div className="glass-card rounded-2xl p-7">
-              <div className="flex items-center gap-2 mb-5" style={{ color: "var(--text-secondary)" }}>
+              <div className="flex items-center gap-2 mb-5" style={{ color: "var(--t2)" }}>
                 <User size={14} />
                 <span className="text-xs font-semibold uppercase tracking-wider">Profile</span>
               </div>
@@ -72,7 +72,7 @@ export default function SettingsClient({ user }: Props) {
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium uppercase tracking-wider mb-1.5"
-                    style={{ color: "var(--text-secondary)" }}>
+                    style={{ color: "var(--t2)" }}>
                     Display name
                   </label>
                   <input
@@ -81,15 +81,15 @@ export default function SettingsClient({ user }: Props) {
                     type="text"
                     placeholder="Your name"
                     className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                    onFocus={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--primary)")}
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--t1)" }}
+                    onFocus={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--blue)")}
                     onBlur={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--border)")}
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium uppercase tracking-wider mb-1.5"
-                    style={{ color: "var(--text-secondary)" }}>
+                    style={{ color: "var(--t2)" }}>
                     Email
                   </label>
                   <input
@@ -97,9 +97,9 @@ export default function SettingsClient({ user }: Props) {
                     disabled
                     type="email"
                     className="w-full px-4 py-3 rounded-xl text-sm outline-none opacity-40 cursor-not-allowed"
-                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                    style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", color: "var(--t1)" }}
                   />
-                  <p className="text-xs mt-1.5" style={{ color: "var(--text-dim)" }}>
+                  <p className="text-xs mt-1.5" style={{ color: "var(--t3)" }}>
                     Email cannot be changed after registration.
                   </p>
                 </div>
@@ -108,11 +108,11 @@ export default function SettingsClient({ user }: Props) {
 
             {/* Base Currency */}
             <div className="glass-card rounded-2xl p-7">
-              <div className="flex items-center gap-2 mb-2" style={{ color: "var(--text-secondary)" }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: "var(--t2)" }}>
                 <Globe size={14} />
                 <span className="text-xs font-semibold uppercase tracking-wider">Base Currency</span>
               </div>
-              <p className="text-xs mb-5" style={{ color: "var(--text-dim)" }}>
+              <p className="text-xs mb-5" style={{ color: "var(--t3)" }}>
                 All transactions convert to this. Changing it does not retroactively convert past records.
               </p>
 
@@ -132,16 +132,16 @@ export default function SettingsClient({ user }: Props) {
                       }}
                     >
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
-                        style={{ background: "rgba(255,255,255,0.06)", color: "var(--text-secondary)", letterSpacing: "0.3px" }}>
+                        style={{ background: "rgba(255,255,255,0.06)", color: "var(--t2)", letterSpacing: "0.3px" }}>
                         {c.slice(0, 2)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium" style={{ color: active ? "var(--text-accent)" : "var(--text-primary)" }}>{c}</p>
-                        <p className="text-xs truncate" style={{ color: "var(--text-dim)" }}>{CURRENCY_LABELS[c as CurrencyCode]}</p>
+                        <p className="text-sm font-medium" style={{ color: active ? "var(--t-accent)" : "var(--t1)" }}>{c}</p>
+                        <p className="text-xs truncate" style={{ color: "var(--t3)" }}>{CURRENCY_LABELS[c as CurrencyCode]}</p>
                       </div>
                       {active && (
                         <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ background: "var(--primary)" }}>
+                          style={{ background: "var(--blue)" }}>
                           <Check size={11} color="white" />
                         </div>
                       )}
@@ -154,7 +154,7 @@ export default function SettingsClient({ user }: Props) {
             {/* Feedback */}
             {error && (
               <div className="flex items-center gap-2.5 text-sm px-4 py-3 rounded-xl"
-                style={{ background: "var(--danger-muted)", border: "1px solid rgba(224,92,92,0.2)", color: "var(--danger)" }}>
+                style={{ background: "var(--red-soft)", border: "1px solid rgba(224,92,92,0.2)", color: "var(--red)" }}>
                 <AlertCircle size={14} className="flex-shrink-0" />
                 {error}
               </div>
@@ -173,7 +173,7 @@ export default function SettingsClient({ user }: Props) {
 
           {/* Privacy */}
           <div className="glass-card rounded-2xl p-7 mt-5">
-            <div className="flex items-center gap-2 mb-4" style={{ color: "var(--text-secondary)" }}>
+            <div className="flex items-center gap-2 mb-4" style={{ color: "var(--t2)" }}>
               <ShieldCheck size={14} />
               <span className="text-xs font-semibold uppercase tracking-wider">Privacy</span>
             </div>
@@ -185,8 +185,8 @@ export default function SettingsClient({ user }: Props) {
                 "Sessions expire and are invalidated on sign out",
                 "All data is isolated to your account only",
               ].map((item) => (
-                <div key={item} className="flex items-start gap-2.5 text-sm" style={{ color: "var(--text-secondary)" }}>
-                  <ShieldCheck size={13} className="mt-0.5 flex-shrink-0" style={{ color: "var(--success)" }} />
+                <div key={item} className="flex items-start gap-2.5 text-sm" style={{ color: "var(--t2)" }}>
+                  <ShieldCheck size={13} className="mt-0.5 flex-shrink-0" style={{ color: "var(--green)" }} />
                   {item}
                 </div>
               ))}

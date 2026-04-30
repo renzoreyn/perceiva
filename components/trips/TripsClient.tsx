@@ -41,10 +41,10 @@ function CreateTripModal({ onClose }: { onClose: () => void }) {
     <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="glass-md glass-shimmer animate-scale-in relative w-full max-w-md rounded-2xl"
-        style={{ border: "1px solid var(--border-md)" }}>
+        style={{ border: "1px solid var(--border-2)" }}>
         <div className="flex items-center justify-between px-7 pt-7 pb-5" style={{ borderBottom: "1px solid var(--border)" }}>
-          <h2 className="font-playfair text-xl font-semibold" style={{ color: "var(--text-primary)" }}>New Trip</h2>
-          <button onClick={onClose} style={{ color: "var(--text-dim)", background: "none", border: "none", cursor: "pointer" }}>
+          <h2 className="font-playfair text-xl font-semibold" style={{ color: "var(--t1)" }}>New Trip</h2>
+          <button onClick={onClose} style={{ color: "var(--t3)", background: "none", border: "none", cursor: "pointer" }}>
             <X size={16} />
           </button>
         </div>
@@ -55,26 +55,26 @@ function CreateTripModal({ onClose }: { onClose: () => void }) {
               { label: "Description", name: "description", type: "text", placeholder: "Optional note", required: false },
             ].map((f) => (
               <div key={f.name}>
-                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--t2)" }}>
                   {f.label}
                 </label>
                 <input name={f.name} type={f.type} placeholder={f.placeholder} required={f.required}
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                  onFocus={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--primary)")}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--t1)" }}
+                  onFocus={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--blue)")}
                   onBlur={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--border)")}
                 />
               </div>
             ))}
             <div>
-              <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--text-secondary)" }}>
+              <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--t2)" }}>
                 Base Currency
               </label>
               <select name="baseCurrency" defaultValue="USD"
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none appearance-none"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}>
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--t1)" }}>
                 {SUPPORTED_CURRENCIES.map((c) => (
-                  <option key={c} value={c} style={{ background: "#0a0a0f" }}>{c}</option>
+                  <option key={c} value={c} style={{ background: "#090910" }}>{c}</option>
                 ))}
               </select>
             </div>
@@ -84,19 +84,19 @@ function CreateTripModal({ onClose }: { onClose: () => void }) {
                 { label: "End Date", name: "endDate" },
               ].map((f) => (
                 <div key={f.name}>
-                  <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--text-secondary)" }}>
-                    {f.label} <span style={{ color: "var(--text-dim)" }}>optional</span>
+                  <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--t2)" }}>
+                    {f.label} <span style={{ color: "var(--t3)" }}>optional</span>
                   </label>
                   <input name={f.name} type="date"
                     className="w-full px-4 py-3 rounded-xl text-sm outline-none"
-                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--t1)" }}
                   />
                 </div>
               ))}
             </div>
             {error && (
               <div className="flex items-center gap-2 text-sm px-4 py-3 rounded-xl"
-                style={{ background: "var(--danger-muted)", color: "var(--danger)" }}>
+                style={{ background: "var(--red-soft)", color: "var(--red)" }}>
                 <AlertCircle size={13} /> {error}
               </div>
             )}
@@ -134,8 +134,8 @@ export default function TripsClient({ trips, userName }: Props) {
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "40px 24px" }}>
           <div className="flex items-center justify-between" style={{ marginBottom: "32px" }}>
             <div>
-              <h1 className="font-playfair text-3xl font-semibold" style={{ color: "var(--text-primary)", marginBottom: "4px" }}>Trips</h1>
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Track spending per trip, normalized to one currency.</p>
+              <h1 className="font-playfair text-3xl font-semibold" style={{ color: "var(--t1)", marginBottom: "4px" }}>Trips</h1>
+              <p className="text-sm" style={{ color: "var(--t2)" }}>Track spending per trip, normalized to one currency.</p>
             </div>
             <button onClick={() => setShowCreate(true)}
               className="btn-primary-glass inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium"
@@ -148,10 +148,10 @@ export default function TripsClient({ trips, userName }: Props) {
             <div className="glass glass-shimmer rounded-2xl p-14 text-center">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4"
                 style={{ background: "rgba(255,255,255,0.05)" }}>
-                <Plane size={20} style={{ color: "var(--text-dim)" }} />
+                <Plane size={20} style={{ color: "var(--t3)" }} />
               </div>
-              <h2 className="font-playfair text-xl font-semibold mb-2" style={{ color: "var(--text-primary)" }}>No trips yet</h2>
-              <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              <h2 className="font-playfair text-xl font-semibold mb-2" style={{ color: "var(--t1)" }}>No trips yet</h2>
+              <p className="text-sm" style={{ color: "var(--t2)" }}>
                 Create a trip to start tracking expenses per destination.
               </p>
             </div>
@@ -169,35 +169,35 @@ export default function TripsClient({ trips, userName }: Props) {
                       </div>
                       <button onClick={() => handleDelete(trip.id)} disabled={deleting === trip.id}
                         className="opacity-0 group-hover:opacity-100 transition-all w-7 h-7 rounded-lg flex items-center justify-center"
-                        style={{ color: "var(--text-dim)", background: "none", border: "none", cursor: "pointer" }}
-                        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--danger)")}
-                        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-dim)")}
+                        style={{ color: "var(--t3)", background: "none", border: "none", cursor: "pointer" }}
+                        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--red)")}
+                        onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--t3)")}
                       >
                         <Trash2 size={13} />
                       </button>
                     </div>
-                    <h3 className="font-playfair text-lg font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
+                    <h3 className="font-playfair text-lg font-semibold mb-1" style={{ color: "var(--t1)" }}>
                       {trip.name}
                     </h3>
                     {trip.description && (
-                      <p className="text-xs mb-3" style={{ color: "var(--text-dim)" }}>{trip.description}</p>
+                      <p className="text-xs mb-3" style={{ color: "var(--t3)" }}>{trip.description}</p>
                     )}
                     {(trip.startDate || trip.endDate) && (
-                      <p className="text-xs mb-3" style={{ color: "var(--text-dim)" }}>
+                      <p className="text-xs mb-3" style={{ color: "var(--t3)" }}>
                         {trip.startDate ? formatDate(trip.startDate) : "?"} →{" "}
                         {trip.endDate ? formatDate(trip.endDate) : "ongoing"}
                       </p>
                     )}
                     <div className="flex items-center justify-between pt-4" style={{ borderTop: "1px solid var(--border)" }}>
                       <div>
-                        <div className="text-xs mb-1" style={{ color: "var(--text-dim)" }}>Total spent</div>
-                        <div className="font-playfair text-lg font-semibold" style={{ color: "var(--danger)" }}>
+                        <div className="text-xs mb-1" style={{ color: "var(--t3)" }}>Total spent</div>
+                        <div className="font-playfair text-lg font-semibold" style={{ color: "var(--red)" }}>
                           {sym}{trip.totalSpent.toFixed(2)}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xs mb-1" style={{ color: "var(--text-dim)" }}>Transactions</div>
-                        <div className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>{trip.transactionCount}</div>
+                        <div className="text-xs mb-1" style={{ color: "var(--t3)" }}>Transactions</div>
+                        <div className="text-lg font-semibold" style={{ color: "var(--t1)" }}>{trip.transactionCount}</div>
                       </div>
                     </div>
                   </div>

@@ -72,20 +72,20 @@ export default function AddTransactionModal({ open, onClose, baseCurrency, trips
     >
       <div
         className="glass-md glass-shimmer animate-scale-in relative w-full max-w-md rounded-2xl"
-        style={{ border: "1px solid var(--border-md)" }}
+        style={{ border: "1px solid var(--border-2)" }}
       >
         <div
           className="flex items-center justify-between px-7 pt-7 pb-5"
           style={{ borderBottom: "1px solid var(--border)" }}
         >
-          <h2 className="font-playfair text-xl font-semibold" style={{ color: "var(--text-primary)" }}>
+          <h2 className="font-playfair text-xl font-semibold" style={{ color: "var(--t1)" }}>
             Add Transaction
           </h2>
           <button onClick={onClose}
             className="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
-            style={{ color: "var(--text-dim)", background: "none", border: "none", cursor: "pointer" }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-primary)")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-dim)")}
+            style={{ color: "var(--t3)", background: "none", border: "none", cursor: "pointer" }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--t1)")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--t3)")}
           >
             <X size={16} />
           </button>
@@ -99,8 +99,8 @@ export default function AddTransactionModal({ open, onClose, baseCurrency, trips
                 <button key={t} type="button" onClick={() => setType(t)}
                   className="flex-1 py-2 rounded-lg text-sm font-medium capitalize transition-all"
                   style={{
-                    background: type === t ? "rgba(107,143,212,0.2)" : "transparent",
-                    color: type === t ? "var(--text-accent)" : "var(--text-dim)",
+                    background: type === t ? "rgba(108,144,216,0.2)" : "transparent",
+                    color: type === t ? "var(--t-accent)" : "var(--t3)",
                     border: "none", cursor: "pointer",
                   }}
                 >
@@ -112,26 +112,26 @@ export default function AddTransactionModal({ open, onClose, baseCurrency, trips
             {/* Amount + Currency */}
             <div className="flex gap-3">
               <div className="flex-1">
-                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--t2)" }}>
                   Amount
                 </label>
                 <input name="amount" type="number" step="any" min="0.01" required placeholder="0.00"
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                  onFocus={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--primary)")}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--t1)" }}
+                  onFocus={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--blue)")}
                   onBlur={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--border)")}
                 />
               </div>
               <div style={{ width: "110px" }}>
-                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--t2)" }}>
                   Currency
                 </label>
                 <select name="currency" defaultValue={baseCurrency}
                   className="w-full px-3 py-3 rounded-xl text-sm outline-none appearance-none"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--t1)" }}
                 >
                   {SUPPORTED_CURRENCIES.map((c) => (
-                    <option key={c} value={c} style={{ background: "#0a0a0f" }}>{c}</option>
+                    <option key={c} value={c} style={{ background: "#090910" }}>{c}</option>
                   ))}
                 </select>
               </div>
@@ -139,29 +139,29 @@ export default function AddTransactionModal({ open, onClose, baseCurrency, trips
 
             {/* Category */}
             <div>
-              <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--text-secondary)" }}>
+              <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--t2)" }}>
                 Category
               </label>
               <select name="category" required
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none appearance-none"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--t1)" }}
               >
                 {categories.map((c) => (
-                  <option key={c} value={c} style={{ background: "#0a0a0f" }}>{CATEGORY_LABELS[c]}</option>
+                  <option key={c} value={c} style={{ background: "#090910" }}>{CATEGORY_LABELS[c]}</option>
                 ))}
               </select>
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--text-secondary)" }}>
+              <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--t2)" }}>
                 Description{" "}
-                <span className="normal-case tracking-normal font-normal" style={{ color: "var(--text-dim)" }}>optional</span>
+                <span className="normal-case tracking-normal font-normal" style={{ color: "var(--t3)" }}>optional</span>
               </label>
               <input name="description" type="text" placeholder="e.g. Lunch at Yerevan café" maxLength={300}
                 className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
-                onFocus={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--primary)")}
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--t1)" }}
+                onFocus={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--blue)")}
                 onBlur={(e) => ((e.target as HTMLInputElement).style.borderColor = "var(--border)")}
               />
             </div>
@@ -169,17 +169,17 @@ export default function AddTransactionModal({ open, onClose, baseCurrency, trips
             {/* Trip (if trips exist) */}
             {trips.length > 0 && (
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--t2)" }}>
                   Trip{" "}
-                  <span className="normal-case tracking-normal font-normal" style={{ color: "var(--text-dim)" }}>optional</span>
+                  <span className="normal-case tracking-normal font-normal" style={{ color: "var(--t3)" }}>optional</span>
                 </label>
                 <select name="tripId"
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none appearance-none"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--t1)" }}
                 >
-                  <option value="" style={{ background: "#0a0a0f" }}>No trip</option>
+                  <option value="" style={{ background: "#090910" }}>No trip</option>
                   {trips.map((t) => (
-                    <option key={t.id} value={t.id} style={{ background: "#0a0a0f" }}>{t.name}</option>
+                    <option key={t.id} value={t.id} style={{ background: "#090910" }}>{t.name}</option>
                   ))}
                 </select>
               </div>
@@ -188,12 +188,12 @@ export default function AddTransactionModal({ open, onClose, baseCurrency, trips
             {/* Recurring toggle */}
             <div className="flex items-center justify-between py-3 px-4 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)" }}>
               <div className="flex items-center gap-2">
-                <RefreshCw size={13} style={{ color: "var(--text-dim)" }} />
-                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Recurring</span>
+                <RefreshCw size={13} style={{ color: "var(--t3)" }} />
+                <span className="text-sm" style={{ color: "var(--t2)" }}>Recurring</span>
               </div>
               <button type="button" onClick={() => setIsRecurring(!isRecurring)}
                 className="w-10 h-5 rounded-full transition-all relative"
-                style={{ background: isRecurring ? "var(--primary)" : "rgba(255,255,255,0.1)", border: "none", cursor: "pointer" }}
+                style={{ background: isRecurring ? "var(--blue)" : "rgba(255,255,255,0.1)", border: "none", cursor: "pointer" }}
               >
                 <span className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
                   style={{ left: isRecurring ? "calc(100% - 18px)" : "2px", boxShadow: "0 1px 3px rgba(0,0,0,0.4)" }}
@@ -203,30 +203,30 @@ export default function AddTransactionModal({ open, onClose, baseCurrency, trips
 
             {isRecurring && (
               <div>
-                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--text-secondary)" }}>
+                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--t2)" }}>
                   Frequency
                 </label>
                 <select name="recurringFreq" defaultValue="monthly"
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none appearance-none"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)", color: "var(--t1)" }}
                 >
-                  <option value="daily" style={{ background: "#0a0a0f" }}>Daily</option>
-                  <option value="weekly" style={{ background: "#0a0a0f" }}>Weekly</option>
-                  <option value="monthly" style={{ background: "#0a0a0f" }}>Monthly</option>
+                  <option value="daily" style={{ background: "#090910" }}>Daily</option>
+                  <option value="weekly" style={{ background: "#090910" }}>Weekly</option>
+                  <option value="monthly" style={{ background: "#090910" }}>Monthly</option>
                 </select>
               </div>
             )}
 
             {/* Conversion note */}
             <div className="flex items-center gap-2 text-xs rounded-xl px-3 py-2.5"
-              style={{ background: "var(--primary-muted)", color: "var(--text-accent)" }}>
+              style={{ background: "var(--blue-soft)", color: "var(--t-accent)" }}>
               <RefreshCw size={11} />
               Auto-converted to {baseCurrency} at live rates
             </div>
 
             {error && (
               <div className="flex items-start gap-2 text-sm px-4 py-3 rounded-xl"
-                style={{ background: "var(--danger-muted)", border: "1px solid rgba(224,107,107,0.2)", color: "var(--danger)" }}>
+                style={{ background: "var(--red-soft)", border: "1px solid rgba(224,92,92,0.2)", color: "var(--red)" }}>
                 <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
                 {error}
               </div>

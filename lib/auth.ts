@@ -9,6 +9,7 @@ const adapter = new PrismaAdapter(prisma.session, prisma.user);
 export const lucia = new Lucia(adapter, {
   sessionCookie: {
     name: "perceiva_session",
+    expires: false,
     attributes: {
       secure: process.env.NODE_ENV === "production",
     },
@@ -32,9 +33,7 @@ declare module "lucia" {
 }
 
 export const validateRequest = cache(async () => {
-  const sessionId =
-    cookies().get(lucia.sessionCookieName)?.value ?? null;
-
+  const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
   if (!sessionId) return { user: null, session: null };
 
   const result = await lucia.validateSession(sessionId);
@@ -49,7 +48,7 @@ export const validateRequest = cache(async () => {
       cookies().set(blank.name, blank.value, blank.attributes);
     }
   } catch {
-    // read-only cookies during static rendering — safe to ignore
+    // Next.js 14 throws when setting cookies during page render — safe to ignore
   }
 
   return result;

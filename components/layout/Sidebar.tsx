@@ -1,12 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard, ArrowUpDown, LineChart,
-  Settings, LogOut, Plane,
-} from "lucide-react";
+import { LayoutDashboard, ArrowUpDown, LineChart, Settings, LogOut, Plane } from "lucide-react";
 import { logout } from "@/server/actions/auth.actions";
-import { LogoFull, LogoMark } from "@/components/ui/Logo";
+import { LogoFull } from "@/components/ui/Logo";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const NAV = [
   { href: "/dashboard",    label: "Overview",      icon: LayoutDashboard },
@@ -18,7 +16,6 @@ const NAV = [
 
 export default function Sidebar({ userName }: { userName: string }) {
   const path = usePathname();
-
   const isActive = (href: string) =>
     href === "/dashboard" ? path === href : path.startsWith(href);
 
@@ -26,35 +23,23 @@ export default function Sidebar({ userName }: { userName: string }) {
     <>
       {/* Desktop sidebar */}
       <aside
-        className="desktop-sidebar w-52 flex flex-col h-screen sticky top-0 flex-shrink-0"
-        style={{
-          background: "rgba(8,8,18,0.65)",
-          backdropFilter: "blur(28px)",
-          WebkitBackdropFilter: "blur(28px)",
-          borderRight: "1px solid var(--border)",
-          zIndex: 40,
-        }}
+        className="d-sidebar w-52 flex flex-col h-screen sticky top-0 flex-shrink-0 g2"
+        style={{ borderRight: "1px solid var(--border)", zIndex: 40 }}
       >
-        {/* Logo */}
         <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--border)" }}>
-          <a href="/dashboard">
-            <LogoFull size={28} />
-          </a>
+          <a href="/dashboard"><LogoFull size={26} /></a>
         </div>
 
-        {/* Nav links */}
         <nav className="flex-1 px-2.5 py-5 space-y-0.5">
           {NAV.map(({ href, label, icon: Icon }) => {
             const active = isActive(href);
             return (
-              <a
-                key={href}
-                href={href}
+              <a key={href} href={href}
                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all"
                 style={{
-                  background: active ? "rgba(107,143,212,0.13)" : "transparent",
-                  color: active ? "var(--text-accent)" : "var(--text-dim)",
-                  borderLeft: active ? "2px solid var(--primary)" : "2px solid transparent",
+                  background: active ? "var(--blue-soft)" : "transparent",
+                  color: active ? "var(--t-accent)" : "var(--t3)",
+                  borderLeft: `2px solid ${active ? "var(--blue)" : "transparent"}`,
                   fontWeight: active ? 500 : 400,
                 }}
               >
@@ -65,25 +50,21 @@ export default function Sidebar({ userName }: { userName: string }) {
           })}
         </nav>
 
-        {/* User + logout */}
         <div className="px-4 py-5" style={{ borderTop: "1px solid var(--border)" }}>
-          <p
-            className="text-xs mb-3 truncate"
-            style={{ color: "var(--text-secondary)", fontWeight: 500 }}
-            title={userName}
-          >
-            {userName}
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-medium truncate" style={{ color: "var(--t2)" }} title={userName}>
+              {userName}
+            </p>
+            <ThemeToggle />
+          </div>
           <form action={logout}>
-            <button
-              type="submit"
+            <button type="submit"
               className="flex items-center gap-2 text-xs transition-colors"
-              style={{ color: "var(--text-dim)", background: "none", border: "none", cursor: "pointer" }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-secondary)")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--text-dim)")}
+              style={{ color: "var(--t3)", background: "none", border: "none", cursor: "pointer" }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--t2)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "var(--t3)")}
             >
-              <LogOut size={13} />
-              Sign out
+              <LogOut size={13} /> Sign out
             </button>
           </form>
         </div>
@@ -91,11 +72,8 @@ export default function Sidebar({ userName }: { userName: string }) {
 
       {/* Mobile bottom nav */}
       <nav
-        className="mobile-nav-show fixed bottom-0 left-0 right-0 z-50 items-center justify-around px-2"
+        className="m-nav fixed bottom-0 left-0 right-0 z-50 items-center justify-around px-2 g3"
         style={{
-          background: "rgba(6,6,14,0.88)",
-          backdropFilter: "blur(28px)",
-          WebkitBackdropFilter: "blur(28px)",
           borderTop: "1px solid var(--border)",
           paddingTop: "10px",
           paddingBottom: "max(10px, env(safe-area-inset-bottom))",
@@ -104,13 +82,11 @@ export default function Sidebar({ userName }: { userName: string }) {
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
           return (
-            <a
-              key={href}
-              href={href}
+            <a key={href} href={href}
               className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all"
               style={{
-                color: active ? "var(--primary)" : "var(--text-dim)",
-                background: active ? "var(--primary-muted)" : "transparent",
+                color: active ? "var(--blue)" : "var(--t3)",
+                background: active ? "var(--blue-soft)" : "transparent",
                 minWidth: "48px",
               }}
             >
