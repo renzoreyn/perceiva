@@ -419,7 +419,7 @@ export default function LandingPage() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: "14px" }}>
               {/* Wide card */}
               <div className="g1 glass-spec glass-hover rounded-2xl p-7"
-                style={{ gridColumn: "span 2", background: "var(--blue-soft)", border: "1px solid rgba(108,144,216,0.2)", gridColumn: "span 2" }}>
+                style={{ gridColumn: "span 2", background: "var(--blue-soft)", border: "1px solid rgba(108,144,216,0.2)" }}>
                 <div style={{ width: "40px", height: "40px", borderRadius: "12px", background: "rgba(108,144,216,0.2)", border: "1px solid rgba(108,144,216,0.3)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "18px" }}>
                   <RefreshCw size={16} style={{ color: "var(--blue)" }} />
                 </div>
