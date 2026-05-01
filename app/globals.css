@@ -343,3 +343,35 @@
 ::view-transition-new(root) {
   z-index: 2147483646;
 }
+
+/* ── MOBILE FIXES ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Stack summary cards 2x2 on mobile */
+  .summary-grid { grid-template-columns: repeat(2,1fr) !important; gap: 10px !important; }
+
+  /* Stack main content grid */
+  .main-grid { grid-template-columns: 1fr !important; }
+  .right-col { display: none !important; }
+
+  /* Full-width feature cards */
+  .features-grid { grid-template-columns: 1fr !important; }
+  .features-grid > [style*="span 2"] { grid-column: span 1 !important; }
+
+  /* Transaction list smaller text */
+  .tx-amount { font-size: 12px !important; }
+
+  /* Auth form padding */
+  .auth-card { padding: 28px 20px !important; }
+}
+
+/* Bottom nav safe area */
+.has-mobile-nav {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+
+/* Input on mobile — prevent zoom */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}

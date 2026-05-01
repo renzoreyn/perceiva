@@ -1,227 +1,68 @@
-<div align="center">
-  <br/>
-  <h1>Perceiva</h1>
-  <p><strong>See your money in its real value.</strong></p>
-  <p>A privacy-first personal finance tracker that corrects currency perception distortion.</p>
-  <br/>
-</div>
+# Perceiva
+
+Perceiva is a personal finance tracker built around one idea: your brain lies to you about money when you spend across currencies.
+
+Spending 165,000 IDR feels like a lot. Spending 3,980 AMD feels like almost nothing. Both are roughly $10 USD. That gap between how a number feels and what it actually represents is currency perception distortion, and it quietly wrecks budgets for anyone living or working across multiple currencies.
+
+Perceiva corrects this by converting every transaction to your chosen base currency in real time, while preserving the original amount for context. You always see both the number you spent and what it actually cost you.
 
 ---
 
-## What is Perceiva?
+## Who it's for
 
-When you live or spend across multiple currencies, your brain misjudges value based on the numbers it sees — not what those numbers actually represent. Spending 165,000 IDR feels like a lot. Spending 3,980 AMD feels like nothing. Both equal roughly **$10 USD**. This psychological mismatch quietly drives overspending — and most people never realize it.
-
-Perceiva strips the illusion away. Every transaction is converted to your base currency at the moment of entry, using live exchange rates, and the original amount is preserved for context. You see what every purchase actually costs — not how it feels.
-
----
-
-## Core Features
-
-**Currency Normalization**  
-Every transaction is instantly converted to your chosen base currency at the live exchange rate. The original amount and currency are preserved alongside the conversion. Exchange rate snapshots are stored per transaction for historical accuracy — your records stay truthful even as markets move.
-
-**Multi-Currency Support**  
-Supports USD, EUR, GBP, CNY, IDR, and AMD — covering the most common multi-currency living patterns for expats, remote workers, and frequent travelers.
-
-**Monthly Recap Cards**  
-On the first of each month, Perceiva generates a calm, reflective recap of your previous month. This includes total income, total spending, net balance, savings rate, top spending categories, and a currency distortion analysis — showing how perception may have affected your behavior. No gamification, no alarms. Just honest reflection.
-
-**Behavioral Insights**  
-The recap identifies patterns: weekend vs. weekday spending ratios, transaction frequency, and month-over-month changes in income, spending, and net balance.
-
-**Fast Transaction Entry**  
-Add transactions in seconds via a focused modal. Category and description are optional — the core data (amount, currency, type) is all that's required.
-
-**Category & Currency Breakdown**  
-Dashboard charts and breakdowns show where your money goes, organized by category and currency, all normalized to a single base.
+- Expats and digital nomads living in a foreign currency
+- Remote workers getting paid in one currency and spending in another
+- Frequent travelers who lose track of real costs when hopping between countries
+- Anyone who has looked at their bank statement and thought "wait, I spent how much?"
 
 ---
 
-## Privacy & Security
+## What it does
 
-Perceiva is built privacy-first by design, not as an afterthought.
+**Real-time currency normalization.** Every transaction you log is instantly converted to your base currency using live exchange rates. The exchange rate at the time of the transaction is stored permanently, so your history stays accurate even as markets move.
 
-- No analytics tools — no Google Analytics, no behavioral tracking scripts
-- No data selling, ever — your financial data is not a product
-- No cross-user data visibility — all queries are strictly isolated to the authenticated user
-- Passwords hashed with bcrypt (cost factor 12)
-- Lucia v3 session management with secure, HttpOnly cookies
-- All environment secrets accessed via server-side environment variables only
-- Content Security Policy headers configured on all routes
+**Monthly recap cards.** On the 1st of each month, Perceiva generates a recap of your previous month. It covers total income, spending, net balance, savings rate, top categories, and a currency distortion analysis that shows how perception may have affected your behavior.
 
----
+**Budget goals.** Set monthly spending limits per category. Perceiva tracks your progress in real time and flags when you are approaching or over budget.
 
-## Tech Stack
+**Trip mode.** Create a trip, tag transactions to it, and get a clean per-trip breakdown. Useful for separating travel spending from your regular baseline.
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript |
-| Styling | Tailwind CSS |
-| UI Components | Radix UI primitives + Lucide icons |
-| Charts | Recharts |
-| Auth | Lucia v3 |
-| ORM | Prisma |
-| Database | PostgreSQL |
-| Currency Rates | ExchangeRate-API v6 |
-| Deployment | Vercel |
+**Spending velocity.** A live indicator on the dashboard that tells you whether you are spending faster or slower than last month at the same point in the billing cycle. Early warning before the recap arrives.
+
+**Transaction search and filtering.** Filter by type, category, currency, or free-text search across descriptions. Export everything as CSV whenever you want your data out.
+
+**Light and dark mode.** Full theme support with a circle-wipe transition animation when switching.
+
+**Privacy by design.** No analytics, no behavioral tracking, no data selling. Your financial data is stored in an isolated database, hashed and secured, and never shared with anyone.
 
 ---
 
-## Setup
+## Roadmap
 
-### Prerequisites
+These are the things we want to build next, roughly in order of priority.
 
-- Node.js 20+
-- PostgreSQL 15+ (locally or via [Neon](https://neon.tech) / [Supabase](https://supabase.com))
-- A free [ExchangeRate-API](https://app.exchangerate-api.com) account for the currency API key
+**Multi-account support.** Right now everything lives under one bucket. The next step is letting users create named accounts like "Cash", "Bank", or "Card" and assign transactions to each. Gives a more accurate picture of where money actually lives, not just where it went.
 
-### 1. Clone and install
+**Recurring transaction automation.** Marked recurring transactions should auto-generate on their schedule without manual logging. Salary on the 1st, rent on the 5th, subscriptions whenever they hit. Log it once, let Perceiva handle the rest.
 
-```bash
-git clone https://github.com/youruser/perceiva.git
-cd perceiva
-npm install
-```
+**Net worth snapshot.** A simple assets vs liabilities view tracked over time. Not just cash flow but a point-in-time picture of where you actually stand financially.
 
-### 2. Configure environment
+**Exchange rate history chart.** Show how the rates you have been transacting at compare to current rates. Useful for spotting whether you have consistently been converting at bad times.
 
-```bash
-cp .env.example .env.local
-```
+**Shared expense splitting.** Two people traveling together, one pays, both log it. Perceiva tracks the split in normalized currency so there is no more back-and-forth trying to figure out who owes what across three different currencies.
 
-Open `.env.local` and fill in the values:
+**Weekly digest.** A lightweight optional summary delivered by email covering your week in spending. Self-hosted, no tracking pixels, just your numbers.
 
-```env
-DATABASE_URL="postgresql://username:password@localhost:5432/perceiva"
-AUTH_SECRET="generate-with-openssl-rand-base64-32"
-CURRENCY_API_KEY="your-exchangerate-api-key"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-CRON_SECRET="generate-with-openssl-rand-base64-32"
-```
+**More currencies.** The current six (USD, EUR, GBP, CNY, IDR, AMD) cover the most common use cases but the list should grow based on what users actually need.
 
-To generate secrets:
-```bash
-openssl rand -base64 32
-```
-
-### 3. Set up the database
-
-```bash
-# Push schema to the database
-npm run db:push
-
-# Or create a tracked migration
-npm run db:migrate
-```
-
-### 4. Run the dev server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
+**Mobile app.** The web app is mobile-responsive but a native app would let Perceiva pull transaction data directly from bank integrations and remove the manual logging step entirely. This is a longer-term goal.
 
 ---
 
-## Deployment (Vercel)
+## Tech
 
-### Database
-
-For production, use a managed PostgreSQL provider:
-- **[Neon](https://neon.tech)** — serverless PostgreSQL, generous free tier, ideal for Vercel
-- **[Supabase](https://supabase.com)** — PostgreSQL with additional tooling, free tier available
-
-### Deploy steps
-
-1. Push the repository to GitHub
-2. Import the repo in the [Vercel dashboard](https://vercel.com/new)
-3. Add environment variables in Vercel project settings:
-
-| Variable | Value |
-|---|---|
-| `DATABASE_URL` | Your Neon or Supabase PostgreSQL connection string |
-| `AUTH_SECRET` | `openssl rand -base64 32` |
-| `CURRENCY_API_KEY` | Your ExchangeRate-API v6 key |
-| `NEXT_PUBLIC_APP_URL` | `https://your-domain.vercel.app` |
-| `CRON_SECRET` | `openssl rand -base64 32` |
-
-4. Set build command: `npm run build` (runs `prisma generate` automatically)
-5. Deploy
-
-The `vercel.json` file configures a monthly cron job that auto-generates recap cards on the 1st of each month at 06:00 UTC.
+Next.js 14 with App Router, TypeScript, Tailwind CSS, Prisma ORM, PostgreSQL, Lucia v3 authentication, and live exchange rates via ExchangeRate-API. Deployed on Vercel with Neon for the database.
 
 ---
 
-## Exchange Rate API
-
-Perceiva uses [ExchangeRate-API v6](https://v6.exchangerate-api.com) for live rates.
-
-- Free tier: 1,500 requests/month
-- Rates are cached in memory for 1 hour — typical usage is ~720 requests/month
-- Rate snapshots are stored per transaction at creation time — historical accuracy is preserved even if rates move
-
-Alternative providers (drop-in, adjust the URL in `lib/currency.ts`):
-- [Fixer.io](https://fixer.io)
-- [CurrencyAPI](https://currencyapi.com)
-
----
-
-## Project Structure
-
-```
-perceiva/
-├── app/
-│   ├── (auth)/login/          ← Login page
-│   ├── (auth)/register/       ← Registration page
-│   ├── (dashboard)/
-│   │   ├── dashboard/         ← Main dashboard
-│   │   ├── transactions/      ← Transaction list
-│   │   ├── insights/          ← Monthly recap
-│   │   └── settings/          ← Account settings
-│   ├── api/cron/              ← Monthly recap cron endpoint
-│   ├── layout.tsx
-│   └── page.tsx               ← Landing page
-├── components/
-│   ├── auth/                  ← AuthForm
-│   ├── dashboard/             ← DashboardClient
-│   ├── insights/              ← InsightsClient
-│   ├── landing/               ← LandingPage
-│   ├── layout/                ← Sidebar
-│   ├── settings/              ← SettingsClient
-│   └── transactions/          ← AddTransactionModal, TransactionsClient
-├── lib/
-│   ├── auth.ts                ← Lucia session management
-│   ├── currency.ts            ← Exchange rates + conversion
-│   ├── prisma.ts              ← Prisma singleton
-│   ├── utils.ts               ← Shared utilities
-│   └── validations.ts         ← Zod schemas
-├── prisma/
-│   └── schema.prisma          ← Database schema
-├── server/actions/
-│   ├── auth.actions.ts        ← register, login, logout
-│   ├── recap.actions.ts       ← Monthly recap generation
-│   └── transaction.actions.ts ← CRUD + dashboard queries
-├── middleware.ts              ← Route protection
-└── vercel.json                ← Cron job config
-```
-
----
-
-## Available Scripts
-
-| Script | Description |
-|---|---|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production (includes prisma generate) |
-| `npm run start` | Start production server |
-| `npm run db:push` | Push Prisma schema to database (no migration file) |
-| `npm run db:migrate` | Create and apply a migration |
-| `npm run db:studio` | Open Prisma Studio (visual DB browser) |
-| `npm run lint` | Run ESLint |
-
----
-
-*Perceiva — built for clarity, not complexity.*
+*Built for people who live between currencies and want to actually understand where their money goes.*
