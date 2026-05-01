@@ -93,7 +93,7 @@ export default function DashboardClient({ data, budgetProgress }: { data: Dashbo
           )}
 
           {/* Summary cards */}
-          <div className="grid gap-4 mb-4 grid-4col" className="summary-grid" style={{ gridTemplateColumns: "repeat(4,1fr)" }}>
+          <div className="grid gap-4 mb-4 summary-grid" style={{ gridTemplateColumns: "repeat(4,1fr)" }}>
             {[
               { label: "Net Balance", val: summary.netBalance, color: summary.netBalance >= 0 ? "var(--green)" : "var(--red)", icon: Wallet },
               { label: "Income", val: summary.totalIncome, color: "var(--green)", icon: TrendingUp },
@@ -114,7 +114,7 @@ export default function DashboardClient({ data, budgetProgress }: { data: Dashbo
           </div>
 
           {/* Main grid */}
-          <div className="grid gap-4 grid-2col" className="main-grid" style={{ gridTemplateColumns: "1fr 300px" }}>
+          <div className="grid gap-4 main-grid" style={{ gridTemplateColumns: "1fr 300px" }}>
             <div className="flex flex-col gap-4">
 
               {/* Chart */}

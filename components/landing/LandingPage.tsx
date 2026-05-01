@@ -5,7 +5,7 @@ import {
   X, Globe, Lock, ShieldCheck, ArrowRight,
   TrendingUp, TrendingDown, AlertTriangle,
   CheckCircle, BarChart3, RefreshCw, Zap,
-  Eye, ChevronRight, CircleDot, Minus, Menu,
+  Eye, ChevronRight, CircleDot, Minus, Menu, Heart,
 } from "lucide-react";
 import { LogoFull } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -512,7 +512,21 @@ export default function LandingPage() {
               >{l}</a>
             ))}
           </div>
-          <p style={{ fontSize: "12px", color: "var(--t3)" }}>2025 Perceiva</p>
+          <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "12px", color: "var(--t3)" }}>
+            Made with
+            <Heart size={12} style={{ color: "var(--red)", fill: "var(--red)" }} />
+            by{" "}
+            <a
+              href="https://github.com/renzoreyn"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "var(--t2)", textDecoration: "none", transition: "color 0.2s" }}
+              onMouseEnter={(e) => ((e.target as HTMLElement).style.color = "var(--t1)")}
+              onMouseLeave={(e) => ((e.target as HTMLElement).style.color = "var(--t2)")}
+            >
+              @Renzoreyn
+            </a>
+          </div>
         </div>
       </footer>
     </>
