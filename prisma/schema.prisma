@@ -17,6 +17,8 @@ enum Currency {
   IDR
   AMD
   RUB
+  PHP
+  SGD
 }
 
 enum TransactionType {

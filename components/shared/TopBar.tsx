@@ -14,6 +14,8 @@ const DISPLAY_PAIRS: { from: Currency; to: Currency }[] = [
   { from: "USD", to: "GBP" },
   { from: "USD", to: "CNY" },
   { from: "USD", to: "CHF" },
+  { from: "USD", to: "PHP" },
+  { from: "USD", to: "SGD" },
   { from: "AMD", to: "IDR" },
   { from: "EUR", to: "AMD" },
 ];

@@ -1,7 +1,7 @@
 import { Currency, ExchangeRates } from "@/types";
 
 const BASE_URL = "https://api.frankfurter.app";
-const SUPPORTED_CURRENCIES: Currency[] = ["USD", "GBP", "EUR", "CHF", "CNY", "IDR", "AMD", "RUB"];
+const SUPPORTED_CURRENCIES: Currency[] = ["USD", "GBP", "EUR", "CHF", "CNY", "IDR", "AMD", "RUB", "PHP", "SGD"];
 
 // Cache in-memory for the session (5 min TTL)
 let cache: { data: ExchangeRates; expiresAt: number } | null = null;
@@ -82,6 +82,8 @@ function getFallbackRates(base: Currency): ExchangeRates {
     IDR: 15800,
     AMD: 387,
     RUB: 89.5,
+    PHP: 58.4,
+    SGD: 1.35,
   };
 
   if (base === "USD") {

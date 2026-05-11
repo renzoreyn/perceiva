@@ -1,4 +1,4 @@
-export type Currency = "USD" | "GBP" | "EUR" | "CHF" | "CNY" | "IDR" | "AMD" | "RUB";
+export type Currency = "USD" | "GBP" | "EUR" | "CHF" | "CNY" | "IDR" | "AMD" | "RUB" | "PHP" | "SGD";
 export type TransactionType = "INCOME" | "EXPENSE";
 export type RecurrenceInterval = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
 
@@ -141,7 +141,7 @@ export function formatAmount(amount: number, currency: Currency, compact = false
   }
 
   // Currencies with no decimal convention
-  const noDecimal: Currency[] = ["IDR", "AMD", "RUB"];
+  const noDecimal: Currency[] = ["IDR", "AMD", "RUB", "PHP"];
   const decimals = noDecimal.includes(currency) ? 0 : 2;
 
   return `${symbol}${amount.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;

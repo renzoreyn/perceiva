@@ -240,9 +240,11 @@ export default function DashboardClient({
           <Card className="p-4 space-y-3">
             <p className="text-xs text-muted-foreground">What does 1 USD actually look like?</p>
             {[
-              { currency: "AMD" as const, amount: 387, note: "Feels like nothing" },
-              { currency: "IDR" as const, amount: 15800, note: "Sounds huge" },
-              { currency: "RUB" as const, amount: 89, note: "" },
+              { currency: "AMD" as const, amount: 390,    note: "Feels like nothing" },
+              { currency: "IDR" as const, amount: 17417,  note: "Sounds huge" },
+              { currency: "PHP" as const, amount: 58,     note: "" },
+              { currency: "SGD" as const, amount: 1.35,   note: "Close to " },
+              { currency: "RUB" as const, amount: 91,     note: "" },
             ].map(({ currency, amount, note }) => (
               <div key={currency} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
                 <div className="flex items-center gap-2">

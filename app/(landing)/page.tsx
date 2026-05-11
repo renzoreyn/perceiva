@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import Link from "next/link";
 import {
   motion, useScroll, useTransform, useSpring,
@@ -7,36 +7,127 @@ import {
 } from "framer-motion";
 import {
   ArrowRight, Globe, Layers, ShieldCheck, RefreshCw, BarChart2,
-  Heart, Menu, X, ChevronDown, ArrowLeftRight, Zap, Sun, Moon, Check, Sparkles,
+  Heart, Menu, X, ChevronDown, ArrowLeftRight, Zap, Sun, Moon,
+  Check, Sparkles, TrendingUp, TrendingDown, DollarSign,
 } from "lucide-react";
-import { Button }    from "@/components/ui/button";
-import { Badge }     from "@/components/ui/badge";
-import { Switch }    from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
 
-// ─── Phthalo green palette ────────────────────────────────────────────────────
-// True phthalo: #123524 (too dark for dark-bg use)
-// Dark mode accent: #1fa55c (bright phthalo-family, readable on dark)
-// Light mode accent: #0f6b35 (deep phthalo readable on light)
-const PG_DARK  = "#1fa55c";   // bright phthalo — used as accent on dark bg
-const PG_LIGHT = "#0f6b35";   // deep phthalo — used as accent on light bg
-const PG_DARK_DIM   = "rgba(31,165,92,0.13)";
-const PG_DARK_BDR   = "rgba(31,165,92,0.28)";
-const PG_LIGHT_DIM  = "rgba(15,107,53,0.1)";
-const PG_LIGHT_BDR  = "rgba(15,107,53,0.22)";
-const BLUE      = "#0060d4";
-const BLUE_DIM  = "rgba(0,96,212,0.09)";
-const BLUE_BDR  = "rgba(0,96,212,0.2)";
+// ─── Iridescent accent system ────────────────────────────────────────────────
+// An oil-slick / holographic gradient that shifts as it animates
+// On light: darker, more saturated iridescent
+// On dark:  brighter, more vivid iridescent
+const IR_GRADIENT_DARK  = "linear-gradient(90deg,#a78bfa,#38bdf8,#34d399,#a78bfa,#38bdf8)";
+const IR_GRADIENT_LIGHT = "linear-gradient(90deg,#7c3aed,#0369a1,#059669,#7c3aed,#0369a1)";
+// Single solid for buttons/borders (we pick a midpoint)
+const IR_SOLID_DARK  = "#5eead4"; // teal-ish center of dark gradient
+const IR_SOLID_LIGHT = "#0f766e"; // deep teal for light mode
+const IR_DIM_DARK    = "rgba(94,234,212,0.12)";
+const IR_DIM_LIGHT   = "rgba(15,118,110,0.09)";
+const IR_BDR_DARK    = "rgba(94,234,212,0.28)";
+const IR_BDR_LIGHT   = "rgba(15,118,110,0.22)";
 
 const SP  = { stiffness: 100, damping: 22, mass: 1.1 };
 const SPF = { stiffness: 200, damping: 22, mass: 0.85 };
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-// ─── Fade helpers ─────────────────────────────────────────────────────────────
+// ─── Global CSS ──────────────────────────────────────────────────────────────
+const GLOBAL_CSS = `
+  @keyframes twBlink  { 0%,100%{opacity:1} 50%{opacity:0} }
+  @keyframes irShift  { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
+  @keyframes shineSweep { 0%{transform:translateX(-120%)} 100%{transform:translateX(280%)} }
+  @keyframes floatY   { 0%,100%{transform:translateY(0px) rotateX(0deg)} 50%{transform:translateY(-8px) rotateX(2deg)} }
+  @keyframes cardGlow { 0%,100%{opacity:0.4} 50%{opacity:0.8} }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  a { text-decoration:none; }
+  .ir-text {
+    background: var(--ir-grad);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: irShift 4s linear infinite;
+  }
+  .ir-text-static {
+    background: var(--ir-grad);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .tw-cursor {
+    display: inline-block;
+    width: 3px;
+    height: 0.8em;
+    border-radius: 2px;
+    vertical-align: text-bottom;
+    margin-left: 3px;
+    animation: twBlink 1s step-end infinite;
+  }
+  .shine-wrap { position:relative; overflow:hidden; }
+  .shine-wrap::after {
+    content:'';
+    position:absolute;
+    top:0; left:0;
+    width:45%;
+    height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent);
+    transform:translateX(-120%);
+    animation: shineSweep 2.8s ease-in-out infinite;
+    animation-delay: 0.6s;
+    pointer-events:none;
+  }
+  .card-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.08s ease-out;
+  }
+  .card-float {
+    animation: floatY 4s ease-in-out infinite;
+  }
+  .card-glow-pulse {
+    animation: cardGlow 3s ease-in-out infinite;
+  }
+  .hov-lift:hover { transform:translateY(-2px); }
+  @media (max-width:1024px) {
+    .perc-grid { grid-template-columns:repeat(3,1fr) !important; }
+    .perc-anc  { grid-column:span 3 !important; flex-direction:row !important; align-items:center !important; gap:16px !important; padding:22px 24px !important; }
+    .perc-big  { font-size:34px !important; }
+    .card-preview-grid { grid-template-columns:1fr !important; }
+  }
+  @media (max-width:900px) {
+    .desk-nav  { display:none !important; }
+    .desk-si   { display:none !important; }
+    .mob-icon  { display:flex !important; }
+    .feat-grid { grid-template-columns:repeat(2,1fr) !important; }
+    .who-grid  { grid-template-columns:1fr 1fr !important; }
+    .stat-grid { grid-template-columns:repeat(2,1fr) !important; }
+    .perc-grid { grid-template-columns:repeat(2,1fr) !important; }
+    .perc-anc  { grid-column:span 2 !important; }
+    .check-grid{ grid-template-columns:1fr !important; gap:40px !important; }
+    .graph-grid{ grid-template-columns:1fr !important; }
+  }
+  @media (max-width:640px) {
+    .nav-inner { padding:0 18px !important; }
+    .lp-sec    { padding:72px 18px !important; }
+    .feat-grid { grid-template-columns:1fr !important; }
+    .who-grid  { grid-template-columns:1fr !important; }
+    .perc-grid { grid-template-columns:1fr 1fr !important; }
+    .perc-anc  { grid-column:span 2 !important; }
+    .float-hide{ display:none !important; }
+    .foot-inner{ padding:22px 18px !important; }
+    .hero-pad  { padding:120px 18px 90px !important; }
+    .stat-grid { grid-template-columns:1fr 1fr !important; }
+    .cta-sec   { padding:100px 18px 80px !important; }
+  }
+`;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 function FadeUp({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-50px" });
@@ -49,6 +140,7 @@ function FadeUp({ children, delay = 0, className = "" }: { children: React.React
     </motion.div>
   );
 }
+
 function FadeIn({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-40px" });
@@ -61,7 +153,6 @@ function FadeIn({ children, delay = 0, className = "" }: { children: React.React
   );
 }
 
-// ─── Magnetic wrapper ─────────────────────────────────────────────────────────
 function Magnetic({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const x = useSpring(0, SP); const y = useSpring(0, SP);
@@ -70,8 +161,8 @@ function Magnetic({ children }: { children: React.ReactNode }) {
       onMouseMove={e => {
         if (!ref.current) return;
         const r = ref.current.getBoundingClientRect();
-        x.set((e.clientX - r.left - r.width / 2) * 0.18);
-        y.set((e.clientY - r.top - r.height / 2) * 0.18);
+        x.set((e.clientX - r.left - r.width / 2) * 0.16);
+        y.set((e.clientY - r.top - r.height / 2) * 0.16);
       }}
       onMouseLeave={() => { x.set(0); y.set(0); }}>
       {children}
@@ -79,9 +170,9 @@ function Magnetic({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Typewriter — cursor is a SIBLING not a child of gradient span ────────────
-const WORDS = ["AMD", "IDR", "USD", "GBP", "EUR", "CHF", "CNY", "RUB", "anything"];
-function Typewriter({ accent }: { accent: string }) {
+// ─── Typewriter — plain span approach, no inline-flex on h1 level ─────────────
+const WORDS = ["AMD", "IDR", "USD", "GBP", "EUR", "CHF", "CNY", "RUB", "PHP", "SGD", "anything"];
+function Typewriter() {
   const [idx, setIdx] = useState(0);
   const [text, setText] = useState("AMD");
   const [del, setDel] = useState(false);
@@ -90,45 +181,31 @@ function Typewriter({ accent }: { accent: string }) {
     if (pause) { const t = setTimeout(() => { setPause(false); setDel(true); }, 1600); return () => clearTimeout(t); }
     const w = WORDS[idx];
     if (!del) {
-      if (text.length < w.length) { const t = setTimeout(() => setText(w.slice(0, text.length + 1)), 90); return () => clearTimeout(t); }
+      if (text.length < w.length) { const t = setTimeout(() => setText(w.slice(0, text.length + 1)), 88); return () => clearTimeout(t); }
       setPause(true);
     } else {
-      if (text.length > 0) { const t = setTimeout(() => setText(text.slice(0, -1)), 55); return () => clearTimeout(t); }
+      if (text.length > 0) { const t = setTimeout(() => setText(text.slice(0, -1)), 52); return () => clearTimeout(t); }
       setDel(false); setIdx((idx + 1) % WORDS.length);
     }
   }, [text, del, pause, idx]);
+
+  // Key insight: render as a plain <span> without any background/clip
+  // The iridescent effect comes from a CSS class applied to this specific span only
+  // The cursor is a separate DOM sibling rendered AFTER this span in the h1
+  return <span className="ir-text">{text}</span>;
+}
+
+// Cursor rendered separately in the h1, completely independent
+function TwCursor({ dark }: { dark: boolean }) {
   return (
-    // wrapper with inline-flex keeps cursor on same baseline without gradient bleed
-    <span style={{ display: "inline-flex", alignItems: "center", verticalAlign: "middle" }}>
-      <span className="tw-gradient" style={{
-        background: `linear-gradient(90deg, ${accent}, ${accent}bb, ${accent})`,
-        backgroundSize: "200% auto",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        backgroundClip: "text",
-        animation: "twGrad 2.8s linear infinite",
-        minWidth: "2ch",
-      }}>
-        {text}
-      </span>
-      {/* cursor lives OUTSIDE the clipped span so it is never transparent */}
-      <span style={{
-        display: "inline-block",
-        width: 4,
-        height: "0.75em",
-        marginLeft: 4,
-        borderRadius: 2,
-        background: accent,
-        verticalAlign: "middle",
-        animation: "twBlink 1s step-end infinite",
-        flexShrink: 0,
-        transition: "background 0.5s",
-      }} />
-    </span>
+    <span
+      className="tw-cursor"
+      style={{ background: dark ? IR_SOLID_DARK : IR_SOLID_LIGHT, transition: "background 0.5s" }}
+    />
   );
 }
 
-// ─── Animated noise grain ─────────────────────────────────────────────────────
+// ─── Noise ────────────────────────────────────────────────────────────────────
 function Noise() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -140,18 +217,16 @@ function Noise() {
       const img = ctx.createImageData(c.width, c.height);
       for (let i = 0; i < img.data.length; i += 4) {
         const v = Math.random() * 255;
-        img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
-        img.data[i + 3] = 12;
+        img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 11;
       }
       ctx.putImageData(img, 0, 0);
       raf = requestAnimationFrame(draw);
     };
     draw(); return () => cancelAnimationFrame(raf);
   }, []);
-  return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1, opacity: 0.28 }} />;
+  return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1, opacity: 0.3 }} />;
 }
 
-// ─── Animated counter ─────────────────────────────────────────────────────────
 function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
   const [val, setVal] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
@@ -168,7 +243,6 @@ function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
   return <span ref={ref}>{Math.round(val)}{suffix}</span>;
 }
 
-// ─── Velocity-aware marquee ────────────────────────────────────────────────────
 function Marquee({ items, dark }: { items: string[]; dark: boolean }) {
   const x = useMotionValue(0), base = useMotionValue(0);
   const ref = useRef<HTMLDivElement>(null);
@@ -179,14 +253,12 @@ function Marquee({ items, dark }: { items: string[]; dark: boolean }) {
     if (w && Math.abs(base.get()) >= w) base.set(0);
     x.set(base.get());
   });
-  const bdr = dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
-  const dotC = dark ? PG_DARK_BDR : PG_LIGHT_BDR;
   return (
-    <div style={{ overflow: "hidden", borderTop: `1px solid ${bdr}`, borderBottom: `1px solid ${bdr}`, background: dark ? "rgba(255,255,255,0.012)" : "rgba(0,0,0,0.018)", padding: "13px 0", position: "relative", zIndex: 2 }}>
+    <div style={{ overflow: "hidden", borderTop: `1px solid ${dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)"}`, borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)"}`, background: dark ? "rgba(255,255,255,0.012)" : "rgba(0,0,0,0.018)", padding: "12px 0", position: "relative", zIndex: 2 }}>
       <motion.div ref={ref} style={{ x, display: "flex", width: "max-content" }}>
         {[...items, ...items].map((t, i) => (
-          <span key={i} style={{ fontSize: 11.5, fontVariantNumeric: "tabular-nums", color: dark ? "rgba(240,240,240,0.35)" : "rgba(17,17,17,0.46)", letterSpacing: "0.04em", whiteSpace: "nowrap", fontFamily: '"SF Mono",ui-monospace,monospace', display: "flex", alignItems: "center", padding: "0 26px" }}>
-            {t}<span style={{ width: 3, height: 3, borderRadius: "50%", background: dotC, marginLeft: 26, flexShrink: 0, transition: "background 0.5s" }} />
+          <span key={i} style={{ fontSize: 11.5, fontVariantNumeric: "tabular-nums", color: dark ? "rgba(240,240,240,0.34)" : "rgba(17,17,17,0.45)", letterSpacing: "0.04em", whiteSpace: "nowrap", fontFamily: '"SF Mono",ui-monospace,monospace', display: "flex", alignItems: "center", padding: "0 26px" }}>
+            {t}<span style={{ width: 3, height: 3, borderRadius: "50%", background: dark ? IR_BDR_DARK : IR_BDR_LIGHT, marginLeft: 26, flexShrink: 0 }} />
           </span>
         ))}
       </motion.div>
@@ -194,54 +266,195 @@ function Marquee({ items, dark }: { items: string[]; dark: boolean }) {
   );
 }
 
-// ─── Shine badge ──────────────────────────────────────────────────────────────
-function ShineBadge({ dark, accent, accentDim, accentBdr }: { dark: boolean; accent: string; accentDim: string; accentBdr: string }) {
+// ─── 3D Tilt Card ─────────────────────────────────────────────────────────────
+function TiltCard3D({ dark }: { dark: boolean }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const rotX = useSpring(0, { stiffness: 120, damping: 18 });
+  const rotY = useSpring(0, { stiffness: 120, damping: 18 });
+  const glowX = useSpring(50, { stiffness: 120, damping: 18 });
+  const glowY = useSpring(50, { stiffness: 120, damping: 18 });
+
+  const handleMouse = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const r = cardRef.current.getBoundingClientRect();
+    const cx = (e.clientX - r.left) / r.width;
+    const cy = (e.clientY - r.top) / r.height;
+    rotX.set((cy - 0.5) * -22);
+    rotY.set((cx - 0.5) * 22);
+    glowX.set(cx * 100);
+    glowY.set(cy * 100);
+  };
+  const handleLeave = () => {
+    rotX.set(0); rotY.set(0);
+    glowX.set(50); glowY.set(50);
+  };
+
+  // Iridescent card gradient — holographic foil effect
+  const CARD_GRAD_DARK  = "linear-gradient(135deg,#0f172a 0%,#1e293b 40%,#0f3460 70%,#1e0a3c 100%)";
+  const CARD_GRAD_LIGHT = "linear-gradient(135deg,#e2e8f0 0%,#f1f5f9 40%,#dbeafe 70%,#f0e6ff 100%)";
+  const txtColor = dark ? "#e2e8f0" : "#1e293b";
+  const subColor = dark ? "rgba(226,232,240,0.45)" : "rgba(30,41,59,0.5)";
+
   return (
-    <div style={{ position: "relative", display: "inline-flex", overflow: "hidden", borderRadius: 980 }}>
-      <Badge style={{ borderColor: accentBdr, background: accentDim, color: accent, fontSize: 12, gap: 6, borderRadius: 980, padding: "6px 16px", display: "inline-flex", alignItems: "center", transition: "all 0.5s", position: "relative", zIndex: 1 }}>
-        <Zap size={11} style={{ flexShrink: 0 }} />
-        Introducing Perceiva
-      </Badge>
-      {/* shine sweep */}
-      <motion.span
-        style={{ position: "absolute", top: 0, left: "-100%", width: "60%", height: "100%", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)", zIndex: 2, pointerEvents: "none" }}
-        animate={{ left: ["−100%", "200%"] }}
-        transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut", repeatDelay: 1.6 }}
-      />
+    <div style={{ perspective: 1000, display: "flex", justifyContent: "center", alignItems: "center", padding: "20px 0" }}>
+      <motion.div
+        ref={cardRef}
+        className="card-float"
+        style={{ rotateX: rotX, rotateY: rotY, transformStyle: "preserve-3d" }}
+        onMouseMove={handleMouse}
+        onMouseLeave={handleLeave}
+        whileHover={{ scale: 1.03 }}
+        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+      >
+        {/* card body */}
+        <div style={{ width: 340, aspectRatio: "85.6/53.98", borderRadius: 20, position: "relative", overflow: "hidden", background: dark ? CARD_GRAD_DARK : CARD_GRAD_LIGHT, boxShadow: dark ? "0 32px 80px rgba(0,0,0,0.7),0 8px 24px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1)" : "0 32px 80px rgba(0,0,0,0.18),0 8px 24px rgba(0,0,0,0.1),inset 0 1px 0 rgba(255,255,255,0.8)", cursor: "none" }}>
+
+          {/* iridescent foil overlay — follows mouse */}
+          <motion.div style={{
+            position: "absolute", inset: 0, opacity: 0.35, zIndex: 1, pointerEvents: "none",
+            background: `radial-gradient(circle at ${glowX}% ${glowY}%, rgba(168,85,247,0.6) 0%,rgba(56,189,248,0.5) 25%,rgba(52,211,153,0.4) 50%,rgba(251,191,36,0.3) 75%,transparent 100%)`,
+          }} />
+
+          {/* specular gloss strip */}
+          <div style={{ position: "absolute", top: 0, left: "-30%", width: "60%", height: "100%", background: "linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.12) 50%,transparent 60%)", zIndex: 2, pointerEvents: "none", transform: "skewX(-15deg)" }} />
+
+          {/* chip */}
+          <div style={{ position: "absolute", top: 28, left: 24, zIndex: 3 }}>
+            <svg viewBox="0 0 50 40" width={44} height={34} style={{ opacity: 0.75 }}>
+              <rect x="1" y="1" width="48" height="38" rx="6" fill="none" stroke={txtColor} strokeWidth="1.2" opacity="0.5"/>
+              <rect x="10" y="1" width="4" height="38" fill={txtColor} opacity="0.2"/>
+              <rect x="36" y="1" width="4" height="38" fill={txtColor} opacity="0.2"/>
+              <rect x="1" y="12" width="48" height="4" fill={txtColor} opacity="0.2"/>
+              <rect x="1" y="24" width="48" height="4" fill={txtColor} opacity="0.2"/>
+              <rect x="14" y="5" width="22" height="30" rx="2" fill={txtColor} opacity="0.15"/>
+            </svg>
+          </div>
+
+          {/* NFC icon */}
+          <div style={{ position: "absolute", top: 28, right: 24, zIndex: 3, opacity: 0.55 }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={txtColor} strokeWidth="1.5">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" opacity="0.3"/>
+              <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6z" opacity="0.5"/>
+              <path d="M12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+            </svg>
+          </div>
+
+          {/* balance */}
+          <div style={{ position: "absolute", bottom: 36, left: 24, zIndex: 3 }}>
+            <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: subColor, margin: "0 0 4px" }}>Total Balance</p>
+            <p style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.03em", color: txtColor, margin: 0, fontVariantNumeric: "tabular-nums" }}>$4,271.00</p>
+          </div>
+
+          {/* card number + info bottom row */}
+          <div style={{ position: "absolute", bottom: 10, left: 24, right: 24, zIndex: 3, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <p style={{ fontSize: 11, fontFamily: '"SF Mono",ui-monospace,monospace', letterSpacing: "0.18em", color: subColor, margin: 0 }}>●●●● ●●●● ●●●● 4291</p>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: subColor, margin: 0 }}>PERCEIVA</p>
+          </div>
+
+          {/* decorative circles */}
+          <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.04)", zIndex: 0 }} />
+          <div style={{ position: "absolute", bottom: -20, left: -20, width: 90, height: 90, borderRadius: "50%", background: "rgba(255,255,255,0.03)", zIndex: 0 }} />
+        </div>
+
+        {/* shadow plane (parallax) */}
+        <div style={{ position: "absolute", bottom: -24, left: "10%", width: "80%", height: 28, background: "radial-gradient(ellipse,rgba(0,0,0,0.35) 0%,transparent 75%)", borderRadius: "50%", filter: "blur(10px)", transform: "translateZ(-40px)" }} />
+      </motion.div>
     </div>
+  );
+}
+
+// ─── Mini graph components ────────────────────────────────────────────────────
+function MiniSparkline({ data, color, height = 48 }: { data: number[]; color: string; height?: number }) {
+  const max = Math.max(...data), min = Math.min(...data);
+  const range = max - min || 1;
+  const w = 200, h = height;
+  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * (h - 4) - 2}`).join(" ");
+  const area = `M0,${h} L${pts.split(" ").map((p, i) => i === 0 ? `${p}` : p).join(" L")} L${w},${h} Z`;
+  return (
+    <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ display: "block" }}>
+      <defs>
+        <linearGradient id={`sg-${color.slice(1)}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill={`url(#sg-${color.slice(1)})`} />
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DonutChart({ segments, size = 96 }: { segments: { v: number; color: string; label: string }[]; size?: number }) {
+  const total = segments.reduce((s, x) => s + x.v, 0);
+  let cumAngle = -90;
+  const r = 36, cx = size / 2, cy = size / 2, stroke = 12;
+  return (
+    <svg width={size} height={size}>
+      {segments.map((seg, i) => {
+        const angle = (seg.v / total) * 360;
+        const startAngle = cumAngle;
+        cumAngle += angle;
+        const rad = (a: number) => (a * Math.PI) / 180;
+        const x1 = cx + r * Math.cos(rad(startAngle));
+        const y1 = cy + r * Math.sin(rad(startAngle));
+        const x2 = cx + r * Math.cos(rad(startAngle + angle - 1));
+        const y2 = cy + r * Math.sin(rad(startAngle + angle - 1));
+        const large = angle > 180 ? 1 : 0;
+        return (
+          <path key={i}
+            d={`M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`}
+            fill="none" stroke={seg.color} strokeWidth={stroke} strokeLinecap="round" />
+        );
+      })}
+      <circle cx={cx} cy={cy} r={r - stroke / 2 - 2} fill="none" stroke="rgba(128,128,128,0.08)" strokeWidth="1" />
+    </svg>
   );
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const TICKER = [
-  "1 USD = \u058F390 AMD", "1 USD = Rp 17,417 IDR", "1 EUR = $1.09 USD",
-  "1 GBP = $1.27 USD", "1 USD = Fr 0.88 CHF", "1 USD = \u00A57.26 CNY",
-  "1 AMD = Rp 44.7 IDR", "1 CHF = $1.14 USD", "1 USD = \u20BD91.2 RUB",
-  "1 EUR = \u058F425 AMD", "1 GBP = Rp 22,100 IDR", "1 CNY = Rp 2,399 IDR",
+  "1 USD = \u058F390 AMD","1 USD = Rp 17,417 IDR","1 EUR = $1.09 USD",
+  "1 GBP = $1.27 USD","1 USD = Fr 0.88 CHF","1 USD = \u00A57.26 CNY",
+  "1 AMD = Rp 44.7 IDR","1 CHF = $1.14 USD","1 USD = \u20BD91.2 RUB",
+  "1 USD = \u20B158.4 PHP","1 USD = S$1.35 SGD","1 EUR = \u058F425 AMD",
+  "1 SGD = Rp 12,886 IDR","1 PHP = Rp 298 IDR",
 ];
 
 const PERCEPTION = [
-  { code: "AMD", sym: "\u058F", amount: "390",    label: "Armenian Dram",     note: "pocket change vibes" },
-  { code: "IDR", sym: "Rp",    amount: "17,417",  label: "Indonesian Rupiah", note: "17k feels like nothing" },
-  { code: "RUB", sym: "\u20BD", amount: "91.2",   label: "Russian Ruble",     note: "" },
-  { code: "CNY", sym: "\u00A5", amount: "7.26",   label: "Chinese Yuan",      note: "" },
-  { code: "GBP", sym: "\u00A3", amount: "0.79",   label: "British Pound",     note: "worth more than $1" },
+  { code:"AMD",sym:"\u058F",amount:"390",    label:"Armenian Dram",    note:"pocket change vibes" },
+  { code:"IDR",sym:"Rp",   amount:"17,417",  label:"Indonesian Rupiah",note:"17k feels cheap" },
+  { code:"PHP",sym:"\u20B1",amount:"58.4",   label:"Philippine Peso",  note:"" },
+  { code:"SGD",sym:"S$",   amount:"1.35",    label:"Singapore Dollar", note:"close to $1" },
+  { code:"GBP",sym:"\u00A3",amount:"0.79",   label:"British Pound",    note:"worth more" },
 ];
 
 const FEATURES = [
-  { icon: Globe,          title: "8+ currencies",          body: "USD, GBP, EUR, CHF, CNY, IDR, AMD, RUB. More on the way. Log in any." },
-  { icon: RefreshCw,      title: "Live rates",             body: "Converts the moment you log. Frankfurter API. No key, always fresh." },
-  { icon: Layers,         title: "Multiple wallets",       body: "AMD salary. USD freelance. IDR spending. Separate streams, one view." },
-  { icon: BarChart2,      title: "Budget tracking",        body: "Monthly limits per category. Turns red before your bank does." },
-  { icon: ArrowLeftRight, title: "Recurring transactions", body: "Salary, rent, subs. Set once. Logs itself every cycle." },
-  { icon: ShieldCheck,    title: "Your data only",         body: "Email or Google. Your numbers live in your account. Nowhere else." },
+  { icon:Globe,          title:"10 currencies",          body:"USD, GBP, EUR, CHF, CNY, IDR, AMD, RUB, PHP, SGD. Log in any. More coming." },
+  { icon:RefreshCw,      title:"Live rates",             body:"Converts the moment you log. Frankfurter API. No key, always fresh." },
+  { icon:Layers,         title:"Multiple wallets",       body:"AMD salary. USD freelance. IDR spending. Separate streams, one view." },
+  { icon:BarChart2,      title:"Budget tracking",        body:"Monthly limits per category. Turns red before your bank does." },
+  { icon:ArrowLeftRight, title:"Recurring transactions", body:"Salary, rent, subs. Set once. Logs itself every cycle." },
+  { icon:ShieldCheck,    title:"Your data only",         body:"Email or Google. Your numbers live in your account. Nowhere else." },
 ];
 
 const FLOATS = [
-  { from: "4,700 AMD",  to: "$12.05",  d: 0.65 },
-  { from: "Rp 207,000", to: "$11.89",  d: 0.78 },
-  { from: "\u00A380 GBP",    to: "$101.60", d: 0.91 },
-  { from: "Fr 50 CHF",  to: "$57.00",  d: 1.04 },
+  { from:"4,700 AMD",  to:"$12.05",  d:0.65 },
+  { from:"Rp 207,000", to:"$11.89",  d:0.78 },
+  { from:"\u20B1580 PHP",    to:"$9.93",   d:0.91 },
+  { from:"S$50 SGD",   to:"$37.04",  d:1.04 },
+];
+
+// Mock graph data
+const INCOME_DATA  = [1200,1800,1400,2100,1900,2600,2200,3100,2800,3400,3100,4200];
+const EXPENSE_DATA = [800,1100,950,1400,1200,1700,1400,2100,1800,2200,1950,2800];
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+const CATEGORIES = [
+  { label:"Food",    v:32, color:"#f59e0b" },
+  { label:"Rent",    v:28, color:"#3b82f6" },
+  { label:"Subs",    v:14, color:"#8b5cf6" },
+  { label:"Travel",  v:16, color:"#10b981" },
+  { label:"Other",   v:10, color:"#6b7280" },
 ];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -254,318 +467,433 @@ export default function LandingPage() {
 
   const { scrollYProgress } = useScroll({ target: rootRef });
   const rO = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
-  const rY = useTransform(scrollYProgress, [0, 0.12], [0, -48]);
+  const rY = useTransform(scrollYProgress, [0, 0.12], [0, -44]);
   const rS = useTransform(scrollYProgress, [0, 0.12], [1, 0.95]);
-  const hO = useSpring(rO, { stiffness: 75, damping: 18 });
-  const hY = useSpring(rY, { stiffness: 75, damping: 18 });
-  const hS = useSpring(rS, { stiffness: 75, damping: 18 });
+  const hO = useSpring(rO, { stiffness: 70, damping: 18 });
+  const hY = useSpring(rY, { stiffness: 70, damping: 18 });
+  const hS = useSpring(rS, { stiffness: 70, damping: 18 });
 
   useEffect(() => {
-    const h = () => setScrolled(window.scrollY > 44);
+    const h = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", h, { passive: true });
     return () => window.removeEventListener("scroll", h);
   }, []);
 
-  // derived tokens
-  const accent    = dark ? PG_DARK      : PG_LIGHT;
-  const accentDim = dark ? PG_DARK_DIM  : PG_LIGHT_DIM;
-  const accentBdr = dark ? PG_DARK_BDR  : PG_LIGHT_BDR;
-  const bg        = dark ? "#080808"    : "#f5f5f0";
-  const surface   = dark ? "#131313"    : "#ffffff";
-  const bdr       = dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)";
-  const fg        = dark ? "#ececec"    : "#111111";
-  const fgMuted   = dark ? "rgba(236,236,236,0.52)" : "rgba(17,17,17,0.6)";
-  const fgSub     = dark ? "rgba(236,236,236,0.3)"  : "rgba(17,17,17,0.38)";
-  const navBg     = scrolled ? (dark ? "rgba(8,8,8,0.88)" : "rgba(245,245,240,0.92)") : "transparent";
-
-  const T = { transition: "color 0.5s ease, background 0.5s ease, border-color 0.5s ease" };
+  // Tokens
+  const irGrad   = dark ? IR_GRADIENT_DARK  : IR_GRADIENT_LIGHT;
+  const irSolid  = dark ? IR_SOLID_DARK     : IR_SOLID_LIGHT;
+  const irDim    = dark ? IR_DIM_DARK       : IR_DIM_LIGHT;
+  const irBdr    = dark ? IR_BDR_DARK       : IR_BDR_LIGHT;
+  const bg       = dark ? "#080808"         : "#f5f5f0";
+  const surface  = dark ? "#131313"         : "#ffffff";
+  const bdr      = dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)";
+  const fg       = dark ? "#ececec"         : "#111111";
+  const fgMuted  = dark ? "rgba(236,236,236,0.52)" : "rgba(17,17,17,0.6)";
+  const fgSub    = dark ? "rgba(236,236,236,0.3)"  : "rgba(17,17,17,0.38)";
+  const navBg    = scrolled ? (dark?"rgba(8,8,8,0.88)":"rgba(245,245,240,0.92)") : "transparent";
+  const T        = { transition:"color 0.5s,background 0.5s,border-color 0.5s" } as React.CSSProperties;
 
   return (
     <TooltipProvider delayDuration={150}>
-      <style>{`
-        @keyframes twGrad  { from{background-position:0%} to{background-position:200%} }
-        @keyframes twBlink { 0%,100%{opacity:1} 50%{opacity:0} }
-        @keyframes shine   { 0%{left:-100%} 100%{left:200%} }
-        * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        a { text-decoration: none; }
-        .hov-scale:hover { transform: scale(1.015); }
-        /* Responsive grid helpers */
-        @media (max-width: 1024px) {
-          .perc-grid { grid-template-columns: repeat(3,1fr) !important; }
-          .perc-anc  { grid-column: span 3 !important; flex-direction: row !important; align-items: center !important; gap: 20px !important; padding: 24px 28px !important; }
-          .perc-anc .perc-big { font-size: 36px !important; }
-        }
-        @media (max-width: 900px) {
-          .desk-nav  { display: none !important; }
-          .desk-si   { display: none !important; }
-          .mob-icon  { display: flex !important; }
-          .feat-grid { grid-template-columns: repeat(2,1fr) !important; }
-          .who-grid  { grid-template-columns: 1fr 1fr !important; }
-          .stat-grid { grid-template-columns: repeat(2,1fr) !important; }
-          .perc-grid { grid-template-columns: repeat(2,1fr) !important; }
-          .perc-anc  { grid-column: span 2 !important; }
-          .check-grid{ grid-template-columns: 1fr !important; gap: 40px !important; }
-        }
-        @media (max-width: 640px) {
-          .nav-wrap  { padding: 0 18px !important; }
-          .lp-sec    { padding: 72px 18px !important; }
-          .feat-grid { grid-template-columns: 1fr !important; }
-          .who-grid  { grid-template-columns: 1fr !important; }
-          .perc-grid { grid-template-columns: 1fr 1fr !important; }
-          .perc-anc  { grid-column: span 2 !important; }
-          .float-hide{ display: none !important; }
-          .foot-wrap { padding: 22px 18px !important; }
-          .hero-wrap { padding: 120px 18px 90px !important; }
-          .stat-grid { grid-template-columns: 1fr 1fr !important; }
-          .test-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
+      <style>{GLOBAL_CSS}</style>
+      {/* CSS variable for iridescent gradient — inherited by .ir-text */}
+      <style>{`:root { --ir-grad: ${irGrad}; }`}</style>
 
-      <div ref={rootRef} style={{ minHeight: "100vh", background: bg, color: fg, fontFamily: "-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif", overflowX: "hidden", position: "relative", transition: "background 0.5s ease, color 0.5s ease" }}>
+      <div ref={rootRef} style={{ minHeight:"100vh", background:bg, color:fg, fontFamily:"-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif", overflowX:"hidden", position:"relative", transition:"background 0.5s,color 0.5s" }}>
         <Noise />
 
         {/* ── NAV ── */}
-        <motion.header className="nav-wrap"
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.7, ease: EASE }}
-          style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 52px", height: 58, backdropFilter: "blur(28px) saturate(1.5)", WebkitBackdropFilter: "blur(28px) saturate(1.5)", background: navBg, borderBottom: `1px solid ${scrolled ? bdr : "transparent"}`, transition: "background 0.4s, border-color 0.4s" }}>
-          <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.025em", color: fg, flexShrink: 0, ...T }}>Perceiva</span>
-
-          {/* desktop links */}
-          <nav className="desk-nav" style={{ display: "flex", gap: 36 }}>
-            {[["What it does", "what"], ["Who it is for", "who"], ["Why it exists", "perception"]].map(([l, id], i) => (
-              <motion.a key={l} href={`#${id}`}
-                initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08 + i * 0.07, duration: 0.5 }}
-                style={{ fontSize: 13, color: fgMuted, textDecoration: "none", transition: "color 0.2s" }}
-                whileHover={{ color: fg }}>{l}</motion.a>
+        <motion.header className="nav-inner"
+          initial={{ y:-20,opacity:0 }} animate={{ y:0,opacity:1 }}
+          transition={{ duration:0.7,ease:EASE }}
+          style={{ position:"fixed",top:0,left:0,right:0,zIndex:200,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 52px",height:58,backdropFilter:"blur(28px) saturate(1.5)",WebkitBackdropFilter:"blur(28px) saturate(1.5)",background:navBg,borderBottom:`1px solid ${scrolled?bdr:"transparent"}`,transition:"background 0.4s,border-color 0.4s" }}>
+          <span style={{ fontSize:17,fontWeight:700,letterSpacing:"-0.025em",color:fg,flexShrink:0,...T }}>Perceiva</span>
+          <nav className="desk-nav" style={{ display:"flex",gap:36 }}>
+            {[["What it does","what"],["Who it is for","who"],["Why it exists","perception"]].map(([l,id],i)=>(
+              <motion.a key={l} href={`#${id}`} initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} transition={{delay:0.08+i*0.07,duration:0.5}} style={{fontSize:13,color:fgMuted,textDecoration:"none",transition:"color 0.2s"}} whileHover={{color:fg}}>{l}</motion.a>
             ))}
           </nav>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            {/* theme toggle */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-              style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Sun size={13} style={{ color: !dark ? accent : fgSub, transition: "color 0.4s" }} />
-              <Switch checked={dark} onCheckedChange={setDark} style={{ transform: "scale(0.8)" }} />
-              <Moon size={13} style={{ color: dark ? accent : fgSub, transition: "color 0.4s" }} />
+          <div style={{ display:"flex",alignItems:"center",gap:8,flexShrink:0 }}>
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.4}} style={{display:"flex",alignItems:"center",gap:6}}>
+              <Sun size={13} style={{color:!dark?irSolid:fgSub,transition:"color 0.5s"}}/>
+              <Switch checked={dark} onCheckedChange={setDark} style={{transform:"scale(0.8)"}}/>
+              <Moon size={13} style={{color:dark?irSolid:fgSub,transition:"color 0.5s"}}/>
             </motion.div>
-
-            {/* sign in — desktop always visible, proper fg color */}
             <Link href="/login" className="desk-si">
-              <Button variant="ghost" size="sm"
-                style={{ fontSize: 13, color: fg, fontWeight: 500, opacity: 0.72, transition: "opacity 0.2s, color 0.5s" }}>
-                Sign in
-              </Button>
+              <Button variant="ghost" size="sm" style={{fontSize:13,color:fg,fontWeight:500,opacity:0.72,...T}}>Sign in</Button>
             </Link>
-
             <Link href="/signup">
-              <Button size="sm"
-                style={{ fontSize: 13, borderRadius: 980, background: accent, color: "#fff", border: "none", display: "inline-flex", alignItems: "center", gap: 6, transition: "background 0.5s, transform 0.18s, filter 0.2s" }}
-                className="hov-scale">
-                Get started <ArrowRight size={13} />
+              <Button size="sm" style={{fontSize:13,borderRadius:980,background:irSolid,color:"#fff",border:"none",display:"inline-flex",alignItems:"center",gap:6,transition:"background 0.5s,filter 0.2s"}}>
+                Get started <ArrowRight size={13}/>
               </Button>
             </Link>
-
-            {/* hamburger — mobile only */}
-            <button className="mob-icon"
-              onClick={() => setMenu(true)}
-              style={{ display: "none", background: "none", border: "none", color: fg, cursor: "pointer", padding: 7, borderRadius: 8, opacity: 0.75, transition: "color 0.5s" }}>
-              <Menu size={20} />
+            <button className="mob-icon" onClick={()=>setMenu(true)} style={{display:"none",background:"none",border:"none",color:fg,cursor:"pointer",padding:7,borderRadius:8,opacity:0.75,...T}}>
+              <Menu size={20}/>
             </button>
           </div>
         </motion.header>
 
         {/* mobile menu */}
         <AnimatePresence>
-          {menu && (
-            <motion.div
-              initial={{ opacity: 0, x: "100%" }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: "100%" }}
-              transition={{ type: "spring", stiffness: 260, damping: 28 }}
-              style={{ position: "fixed", inset: 0, zIndex: 300, backdropFilter: "blur(32px)", background: dark ? "rgba(8,8,8,0.97)" : "rgba(245,245,240,0.97)", display: "flex", flexDirection: "column", padding: "88px 28px 48px" }}>
-              <button onClick={() => setMenu(false)}
-                style={{ position: "absolute", top: 16, right: 18, background: "rgba(128,128,128,0.12)", border: "none", color: fg, cursor: "pointer", padding: 10, borderRadius: "50%" }}>
-                <X size={22} />
-              </button>
-              <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                {[["What it does", "what"], ["Who it is for", "who"], ["Why it exists", "perception"], ["Sign in", "/login"]].map(([l, id], i) => (
-                  <motion.a key={l} href={id.startsWith("/") ? id : `#${id}`}
-                    initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.07 }}
-                    onClick={() => setMenu(false)}
-                    style={{ fontSize: 26, fontWeight: 600, color: fgMuted, textDecoration: "none", padding: "14px 0", borderBottom: `1px solid ${bdr}`, transition: "color 0.2s" }}
-                  >{l}</motion.a>
+          {menu&&(
+            <motion.div initial={{opacity:0,x:"100%"}} animate={{opacity:1,x:0}} exit={{opacity:0,x:"100%"}} transition={{type:"spring",stiffness:260,damping:28}}
+              style={{position:"fixed",inset:0,zIndex:300,backdropFilter:"blur(32px)",background:dark?"rgba(8,8,8,0.97)":"rgba(245,245,240,0.97)",display:"flex",flexDirection:"column",padding:"88px 28px 48px"}}>
+              <button onClick={()=>setMenu(false)} style={{position:"absolute",top:16,right:18,background:"rgba(128,128,128,0.12)",border:"none",color:fg,cursor:"pointer",padding:10,borderRadius:"50%"}}><X size={22}/></button>
+              <div style={{display:"flex",flexDirection:"column",flex:1}}>
+                {[["What it does","what"],["Who it is for","who"],["Why it exists","perception"],["Sign in","/login"]].map(([l,id],i)=>(
+                  <motion.a key={l} href={id.startsWith("/")?id:`#${id}`} initial={{opacity:0,x:24}} animate={{opacity:1,x:0}} transition={{delay:i*0.07}} onClick={()=>setMenu(false)}
+                    style={{fontSize:26,fontWeight:600,color:fgMuted,textDecoration:"none",padding:"14px 0",borderBottom:`1px solid ${bdr}`,transition:"color 0.2s"}}>{l}</motion.a>
                 ))}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 28 }}>
-                <Link href="/signup" onClick={() => setMenu(false)}>
-                  <Button size="lg" className="w-full" style={{ background: accent, color: "#fff", border: "none", transition: "background 0.5s" }}>
-                    Get started <ArrowRight size={15} />
-                  </Button>
-                </Link>
+              <div style={{display:"flex",flexDirection:"column",gap:12,marginTop:28}}>
+                <Link href="/signup" onClick={()=>setMenu(false)}><Button size="lg" className="w-full" style={{background:irSolid,color:"#fff",border:"none",transition:"background 0.5s"}}>Get started <ArrowRight size={15}/></Button></Link>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* ── HERO ── */}
-        <section className="hero-wrap" style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "130px 24px 110px", overflow: "hidden", zIndex: 2 }}>
-          <motion.div style={{ opacity: hO, y: hY, scale: hS, position: "relative", zIndex: 3, maxWidth: 880, width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 24, willChange: "transform, opacity" }}>
-
+        <section className="hero-pad" style={{position:"relative",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center",padding:"130px 24px 110px",overflow:"hidden",zIndex:2}}>
+          <motion.div style={{opacity:hO,y:hY,scale:hS,position:"relative",zIndex:3,maxWidth:900,width:"100%",display:"flex",flexDirection:"column",alignItems:"center",gap:24,willChange:"transform,opacity"}}>
             {/* shine badge */}
-            <motion.div initial={{ opacity: 0, y: 14, filter: "blur(5px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.25, duration: 0.7, ease: EASE }}>
-              <ShineBadge dark={dark} accent={accent} accentDim={accentDim} accentBdr={accentBdr} />
+            <motion.div initial={{opacity:0,y:14,filter:"blur(5px)"}} animate={{opacity:1,y:0,filter:"blur(0px)"}} transition={{delay:0.25,duration:0.7,ease:EASE}}>
+              <div className="shine-wrap" style={{borderRadius:980,display:"inline-block"}}>
+                <Badge style={{borderColor:irBdr,background:irDim,color:irSolid,fontSize:12,gap:6,borderRadius:980,padding:"6px 16px",display:"inline-flex",alignItems:"center",position:"relative",transition:"all 0.5s"}}>
+                  <Zap size={11} style={{flexShrink:0}}/> Introducing Perceiva
+                </Badge>
+              </div>
             </motion.div>
 
-            {/* headline */}
+            {/* headline — typewriter and cursor are inline spans, h1 has no clip */}
             <motion.h1
-              initial={{ opacity: 0, y: 28, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ delay: 0.36, duration: 0.85, ease: EASE }}
-              style={{ fontSize: "clamp(48px,8.5vw,106px)", fontWeight: 700, letterSpacing: "-0.045em", lineHeight: 1.02, color: fg, margin: 0, ...T }}>
-              Log in <Typewriter accent={accent} /><br />
-              <span style={{ color: fgSub, ...T }}>get the real number.</span>
+              initial={{opacity:0,y:28,filter:"blur(8px)"}}
+              animate={{opacity:1,y:0,filter:"blur(0px)"}}
+              transition={{delay:0.36,duration:0.85,ease:EASE}}
+              style={{fontSize:"clamp(46px,8vw,104px)",fontWeight:700,letterSpacing:"-0.045em",lineHeight:1.02,color:fg,margin:0,...T}}>
+              Log in <Typewriter /><TwCursor dark={dark} /><br/>
+              <span style={{color:fgSub,...T}}>get the real number.</span>
             </motion.h1>
 
-            {/* subtitle */}
-            <motion.p
-              initial={{ opacity: 0, y: 18, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ delay: 0.50, duration: 0.7, ease: EASE }}
-              style={{ fontSize: "clamp(15px,1.9vw,18px)", lineHeight: 1.72, color: fgMuted, maxWidth: 500, margin: 0, ...T }}>
+            <motion.p initial={{opacity:0,y:18,filter:"blur(4px)"}} animate={{opacity:1,y:0,filter:"blur(0px)"}} transition={{delay:0.50,duration:0.7,ease:EASE}}
+              style={{fontSize:"clamp(15px,1.9vw,18px)",lineHeight:1.72,color:fgMuted,maxWidth:500,margin:0,...T}}>
               Your AMD salary hits different when you realize what it actually is in IDR.
               Perceiva converts everything, live — so you always know what you are working with.
             </motion.p>
 
-            {/* CTA buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.62, duration: 0.6, ease: EASE }}
-              style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", justifyContent: "center", marginTop: 6 }}>
+            <motion.div initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{delay:0.62,duration:0.6,ease:EASE}}
+              style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap",justifyContent:"center",marginTop:6}}>
               <Magnetic>
-                <Link href="/signup"
-                  style={{ display: "inline-flex", alignItems: "center", gap: 8, background: accent, color: "#fff", fontSize: 15, fontWeight: 500, borderRadius: 980, padding: "13px 26px", transition: "background 0.5s, filter 0.2s, transform 0.18s" }}
-                  className="hov-scale">
-                  Start for free <ArrowRight size={15} />
+                <Link href="/signup" style={{display:"inline-flex",alignItems:"center",gap:8,background:irSolid,color:"#fff",fontSize:15,fontWeight:500,borderRadius:980,padding:"13px 26px",transition:"background 0.5s,filter 0.2s"}}>
+                  Start for free <ArrowRight size={15}/>
                 </Link>
               </Magnetic>
               <Magnetic>
-                <button onClick={() => setDemoOpen(true)}
-                  style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 15, fontWeight: 500, color: fgMuted, background: "none", border: `1px solid ${bdr}`, borderRadius: 980, padding: "12px 20px", cursor: "pointer", transition: "color 0.3s, border-color 0.4s" }}>
-                  <Sparkles size={14} /> See how it works
+                <button onClick={()=>setDemoOpen(true)} style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:15,fontWeight:500,color:fgMuted,background:"none",border:`1px solid ${bdr}`,borderRadius:980,padding:"12px 20px",cursor:"pointer",transition:"color 0.3s,border-color 0.4s"}}>
+                  <Sparkles size={14}/> See how it works
                 </button>
               </Magnetic>
             </motion.div>
 
-            {/* scroll hint */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}
-              style={{ color: fgSub, marginTop: 14, ...T }}>
-              <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 2.2, ease: [0.45, 0, 0.55, 1] }}>
-                <ChevronDown size={17} />
-              </motion.div>
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:1.3}} style={{color:fgSub,marginTop:12,...T}}>
+              <motion.div animate={{y:[0,6,0]}} transition={{repeat:Infinity,duration:2.2,ease:[0.45,0,0.55,1]}}><ChevronDown size={17}/></motion.div>
             </motion.div>
           </motion.div>
 
           {/* float cards */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", marginTop: 14, position: "relative", zIndex: 3 }}>
-            {FLOATS.map((f, i) => (
-              <motion.div key={i}
-                className={i >= 2 ? "float-hide" : ""}
-                initial={{ opacity: 0, y: 20, scale: 0.92 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: f.d, duration: 0.65, ease: EASE }}
-                whileHover={{ scale: 1.06, y: -3 }}
-                style={{ display: "inline-flex", alignItems: "center", gap: 8, background: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)", border: `1px solid ${bdr}`, borderRadius: 980, padding: "9px 18px", fontSize: 13, backdropFilter: "blur(12px)", cursor: "default", transition: "background 0.5s, border-color 0.4s" }}>
-                <span style={{ color: fgSub, fontVariantNumeric: "tabular-nums", ...T }}>{f.from}</span>
-                <motion.span animate={{ x: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 2.4, delay: i * 0.4, ease: "easeInOut" }}>
-                  <ArrowRight size={11} style={{ color: accent, transition: "color 0.5s" }} />
+          <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center",marginTop:16,position:"relative",zIndex:3}}>
+            {FLOATS.map((f,i)=>(
+              <motion.div key={i} className={i>=2?"float-hide":""}
+                initial={{opacity:0,y:20,scale:0.92}} animate={{opacity:1,y:0,scale:1}}
+                transition={{delay:f.d,duration:0.65,ease:EASE}} whileHover={{scale:1.05,y:-3}}
+                style={{display:"inline-flex",alignItems:"center",gap:8,background:dark?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.04)",border:`1px solid ${bdr}`,borderRadius:980,padding:"9px 18px",fontSize:13,backdropFilter:"blur(12px)",cursor:"default",transition:"background 0.5s,border-color 0.4s"}}>
+                <span style={{color:fgSub,fontVariantNumeric:"tabular-nums",...T}}>{f.from}</span>
+                <motion.span animate={{x:[0,4,0]}} transition={{repeat:Infinity,duration:2.4,delay:i*0.4,ease:"easeInOut"}}>
+                  <ArrowRight size={11} style={{color:irSolid,transition:"color 0.5s"}}/>
                 </motion.span>
-                <span style={{ color: fg, fontWeight: 600, fontVariantNumeric: "tabular-nums", ...T }}>{f.to}</span>
+                <span style={{color:fg,fontWeight:600,fontVariantNumeric:"tabular-nums",...T}}>{f.to}</span>
               </motion.div>
             ))}
           </div>
 
-          {/* glow orbs */}
-          <div style={{ position: "absolute", top: "16%", left: "50%", transform: "translateX(-50%)", width: 820, height: 520, background: `radial-gradient(ellipse, ${accentDim} 0%, transparent 68%)`, pointerEvents: "none", zIndex: 0, transition: "background 0.5s" }} />
-          <div style={{ position: "absolute", bottom: 0, left: "14%", width: 420, height: 420, background: "radial-gradient(ellipse,rgba(94,92,230,0.04) 0%,transparent 70%)", pointerEvents: "none", zIndex: 0 }} />
+          {/* glows */}
+          <div style={{position:"absolute",top:"14%",left:"50%",transform:"translateX(-50%)",width:820,height:520,background:`radial-gradient(ellipse,${irDim} 0%,transparent 68%)`,pointerEvents:"none",zIndex:0,transition:"background 0.5s"}}/>
+          <div style={{position:"absolute",bottom:0,left:"12%",width:360,height:360,background:"radial-gradient(ellipse,rgba(94,92,230,0.04) 0%,transparent 70%)",pointerEvents:"none",zIndex:0}}/>
         </section>
 
-        {/* ── TICKER ── */}
-        <Marquee items={TICKER} dark={dark} />
+        <Marquee items={TICKER} dark={dark}/>
 
-        {/* ── PERCEPTION ── */}
-        <section className="lp-sec" style={{ padding: "120px 24px", position: "relative", zIndex: 2 }} id="perception">
-          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        {/* ── 3D CARD PREVIEW ── */}
+        <section className="lp-sec" style={{padding:"100px 24px",position:"relative",zIndex:2}}>
+          <div style={{maxWidth:1100,margin:"0 auto"}}>
             <FadeUp>
-              <p style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: accent, marginBottom: 14, transition: "color 0.5s" }}>Why it exists</p>
-              <h2 style={{ fontSize: "clamp(30px,5vw,62px)", fontWeight: 700, letterSpacing: "-0.038em", lineHeight: 1.06, color: fg, marginBottom: 18, ...T }}>$1 hits different<br />everywhere you go.</h2>
-              <p style={{ fontSize: 17, lineHeight: 1.72, color: fgMuted, maxWidth: 480, marginBottom: 52, ...T }}>
-                Numbers lie. 4,700 AMD sounds cheap until you do the math. Perceiva does it for you — instantly, every time, no calculator needed.
+              <p style={{fontSize:11.5,fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",color:irSolid,marginBottom:14,transition:"color 0.5s"}}>Wallet cards</p>
+              <h2 style={{fontSize:"clamp(28px,4.5vw,58px)",fontWeight:700,letterSpacing:"-0.038em",lineHeight:1.06,color:fg,marginBottom:18,...T}}>
+                Your wallets.<br/>Beautifully yours.
+              </h2>
+              <p style={{fontSize:17,lineHeight:1.72,color:fgMuted,maxWidth:460,marginBottom:52,...T}}>
+                Every wallet gets its own card. Skeuomorphic, holographic, tilts with your cursor.
+                Customize the color and style — it is yours.
               </p>
             </FadeUp>
 
-            <div className="perc-grid" style={{ display: "grid", gridTemplateColumns: "160px repeat(5,1fr)", gap: 2, borderRadius: 22, overflow: "hidden", border: `1px solid ${bdr}`, background: bdr, transition: "border-color 0.5s, background 0.5s" }}>
-              {/* anchor */}
-              <FadeUp delay={0.05}>
-                <div className="perc-anc" style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "44px 24px", background: accentDim, gap: 4, height: "100%", transition: "background 0.5s" }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: accent, transition: "color 0.5s" }}>anchor</span>
-                  <span className="perc-big" style={{ fontSize: 44, fontWeight: 700, letterSpacing: "-0.04em", color: fg, fontVariantNumeric: "tabular-nums", ...T }}>$1.00</span>
-                  <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", color: fgSub, ...T }}>USD</span>
+            <div className="card-preview-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:60,alignItems:"center"}}>
+              {/* 3D card */}
+              <FadeUp delay={0.1}>
+                <div style={{display:"flex",justifyContent:"center",position:"relative"}}>
+                  {/* background glow */}
+                  <div className="card-glow-pulse" style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:300,height:200,background:`radial-gradient(ellipse,${irDim} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0,transition:"background 0.5s"}}/>
+                  <TiltCard3D dark={dark}/>
                 </div>
               </FadeUp>
-              {PERCEPTION.map((p, i) => (
-                <FadeUp key={p.code} delay={0.05 + i * 0.08}>
+
+              {/* feature list */}
+              <FadeUp delay={0.18}>
+                <div style={{display:"flex",flexDirection:"column",gap:22}}>
+                  {[
+                    { icon:"✦", title:"8 card themes",         body:"Space Grey, Starlight, Gold, Midnight, Product Red, Alpine Green, Deep Purple, Ocean Blue." },
+                    { icon:"◈", title:"Holographic foil",      body:"The iridescent overlay follows your cursor. Exactly like a real card catching light." },
+                    { icon:"◉", title:"Flip to see stats",     body:"Tap any card to flip it. The back shows your total in, out, and transaction count." },
+                    { icon:"⬡", title:"Log in any currency",   body:"The wallet is your AMD account. You can still log USD expenses against it. We handle conversion." },
+                  ].map((item,i)=>(
+                    <motion.div key={i} initial={{opacity:0,x:16}} whileInView={{opacity:1,x:0}} viewport={{once:true}} transition={{delay:i*0.08,duration:0.5,ease:EASE}}
+                      style={{display:"flex",gap:16,alignItems:"flex-start"}}>
+                      <div style={{width:36,height:36,borderRadius:12,background:irDim,border:`1px solid ${irBdr}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:14,color:irSolid,fontWeight:700,transition:"all 0.5s"}}>
+                        {item.icon}
+                      </div>
+                      <div>
+                        <p style={{fontSize:14,fontWeight:600,color:fg,margin:"0 0 3px",...T}}>{item.title}</p>
+                        <p style={{fontSize:13,lineHeight:1.65,color:fgMuted,margin:0,...T}}>{item.body}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </FadeUp>
+            </div>
+          </div>
+        </section>
+
+        <div style={{height:1,background:bdr,transition:"background 0.5s"}}/>
+
+        {/* ── GRAPHS / DASHBOARD PREVIEW ── */}
+        <section className="lp-sec" style={{padding:"100px 24px",position:"relative",zIndex:2}}>
+          <div style={{maxWidth:1100,margin:"0 auto"}}>
+            <FadeUp>
+              <p style={{fontSize:11.5,fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",color:irSolid,marginBottom:14,transition:"color 0.5s"}}>Track everything</p>
+              <h2 style={{fontSize:"clamp(28px,4.5vw,58px)",fontWeight:700,letterSpacing:"-0.038em",lineHeight:1.06,color:fg,marginBottom:18,...T}}>
+                See where it goes.<br/>All of it. In one place.
+              </h2>
+              <p style={{fontSize:17,lineHeight:1.72,color:fgMuted,maxWidth:460,marginBottom:52,...T}}>
+                Income vs expenses over time. Spending by category. Budget burndown.
+                All converted to USD so the numbers actually mean something.
+              </p>
+            </FadeUp>
+
+            {/* dashboard preview cards */}
+            <div className="graph-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}}>
+
+              {/* income vs expense chart */}
+              <FadeUp delay={0.08}>
+                <div style={{background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:22,padding:"28px 28px 20px",overflow:"hidden",transition:"background 0.3s,border-color 0.5s"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+                    <div>
+                      <p style={{fontSize:12,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase",color:fgSub,margin:"0 0 4px",...T}}>Income vs Expenses</p>
+                      <p style={{fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:fg,margin:0,...T}}>$4,271 <span style={{fontSize:13,color:"#10b981",fontWeight:500}}>+18%</span></p>
+                    </div>
+                    <div style={{display:"flex",gap:16,fontSize:11}}>
+                      <span style={{display:"flex",alignItems:"center",gap:5,color:fgSub,...T}}><span style={{width:8,height:8,borderRadius:2,background:"#10b981",display:"inline-block"}}/>Income</span>
+                      <span style={{display:"flex",alignItems:"center",gap:5,color:fgSub,...T}}><span style={{width:8,height:8,borderRadius:2,background:"#f43f5e",display:"inline-block"}}/>Expenses</span>
+                    </div>
+                  </div>
+                  {/* bar chart */}
+                  <div style={{display:"flex",gap:3,alignItems:"flex-end",height:80}}>
+                    {INCOME_DATA.map((v,i)=>{
+                      const maxV = Math.max(...INCOME_DATA,...EXPENSE_DATA);
+                      const ih = (v/maxV)*76; const eh = (EXPENSE_DATA[i]/maxV)*76;
+                      return(
+                        <div key={i} style={{flex:1,display:"flex",gap:1,alignItems:"flex-end",justifyContent:"center"}}>
+                          <motion.div initial={{height:0}} whileInView={{height:ih}} viewport={{once:true}} transition={{delay:i*0.05,duration:0.5,ease:EASE}}
+                            style={{width:"45%",background:"#10b981",borderRadius:"3px 3px 0 0",opacity:0.85}}/>
+                          <motion.div initial={{height:0}} whileInView={{height:eh}} viewport={{once:true}} transition={{delay:i*0.05+0.1,duration:0.5,ease:EASE}}
+                            style={{width:"45%",background:"#f43f5e",borderRadius:"3px 3px 0 0",opacity:0.75}}/>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
+                    {["J","F","M","A","M","J","J","A","S","O","N","D"].map((m,i)=>(
+                      <span key={i} style={{fontSize:9,color:fgSub,fontFamily:'"SF Mono",ui-monospace,monospace',...T}}>{m}</span>
+                    ))}
+                  </div>
+                </div>
+              </FadeUp>
+
+              {/* spending by category + net worth */}
+              <div style={{display:"flex",flexDirection:"column",gap:18}}>
+                <FadeUp delay={0.14}>
+                  <div style={{background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:22,padding:"24px 28px",transition:"background 0.3s,border-color 0.5s"}}>
+                    <p style={{fontSize:12,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase",color:fgSub,margin:"0 0 16px",...T}}>Spending by Category</p>
+                    <div style={{display:"flex",gap:20,alignItems:"center"}}>
+                      <DonutChart segments={CATEGORIES} size={96}/>
+                      <div style={{display:"flex",flexDirection:"column",gap:7,flex:1}}>
+                        {CATEGORIES.map((c,i)=>(
+                          <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                            <div style={{display:"flex",alignItems:"center",gap:7}}>
+                              <div style={{width:8,height:8,borderRadius:2,background:c.color,flexShrink:0}}/>
+                              <span style={{fontSize:12,color:fgMuted,...T}}>{c.label}</span>
+                            </div>
+                            <span style={{fontSize:12,fontWeight:600,color:fg,fontVariantNumeric:"tabular-nums",...T}}>{c.v}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </FadeUp>
+
+                <FadeUp delay={0.2}>
+                  <div style={{background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:22,padding:"24px 28px",transition:"background 0.3s,border-color 0.5s"}}>
+                    <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12}}>
+                      <div>
+                        <p style={{fontSize:12,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase",color:fgSub,margin:"0 0 4px",...T}}>Net Worth</p>
+                        <p style={{fontSize:26,fontWeight:700,letterSpacing:"-0.03em",color:fg,margin:0,...T}}>$8,540</p>
+                        <p style={{fontSize:12,color:"#10b981",margin:"2px 0 0",fontWeight:500}}>+$1,271 this month</p>
+                      </div>
+                      <div style={{width:32,height:32,borderRadius:10,background:irDim,border:`1px solid ${irBdr}`,display:"flex",alignItems:"center",justifyContent:"center",transition:"all 0.5s"}}>
+                        <TrendingUp size={16} style={{color:irSolid,transition:"color 0.5s"}}/>
+                      </div>
+                    </div>
+                    <div style={{position:"relative",overflow:"hidden"}}>
+                      <MiniSparkline data={[4200,5100,4800,6200,5900,7400,6800,8100,7600,8540]} color={irSolid} height={52}/>
+                    </div>
+                  </div>
+                </FadeUp>
+              </div>
+
+              {/* perception check widget */}
+              <FadeUp delay={0.16}>
+                <div style={{background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:22,padding:"24px 28px",transition:"background 0.3s,border-color 0.5s"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+                    <p style={{fontSize:12,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase",color:fgSub,margin:0,...T}}>Perception Check</p>
+                    <Badge style={{fontSize:10,background:irDim,color:irSolid,border:`1px solid ${irBdr}`,borderRadius:980,padding:"2px 8px",transition:"all 0.5s"}}>Live</Badge>
+                  </div>
+                  <p style={{fontSize:12,color:fgMuted,margin:"0 0 14px",...T}}>What 4,700 AMD actually is:</p>
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    {[
+                      {code:"USD",sym:"$",   v:"$12.05",  bar:12,  max:100},
+                      {code:"IDR",sym:"Rp",  v:"Rp 209,708",bar:100,max:100},
+                      {code:"PHP",sym:"\u20B1",v:"\u20B1703", bar:42,  max:100},
+                      {code:"SGD",sym:"S$",  v:"S$16.25", bar:16,  max:100},
+                    ].map((row,i)=>(
+                      <div key={i}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                          <span style={{fontSize:11,color:fgSub,fontFamily:'"SF Mono",ui-monospace,monospace',...T}}>{row.code}</span>
+                          <span style={{fontSize:12,fontWeight:600,color:fg,fontVariantNumeric:"tabular-nums",...T}}>{row.v}</span>
+                        </div>
+                        <div style={{height:4,borderRadius:9999,background:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.08)",overflow:"hidden",transition:"background 0.5s"}}>
+                          <motion.div initial={{width:0}} whileInView={{width:`${row.bar}%`}} viewport={{once:true}}
+                            transition={{delay:i*0.1+0.2,duration:0.7,ease:EASE}}
+                            style={{height:"100%",background:i===1?"#f43f5e":irSolid,borderRadius:9999,transition:"background 0.5s"}}/>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </FadeUp>
+
+              {/* recent transactions */}
+              <FadeUp delay={0.22}>
+                <div style={{background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:22,padding:"24px 28px",transition:"background 0.3s,border-color 0.5s"}}>
+                  <p style={{fontSize:12,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase",color:fgSub,margin:"0 0 16px",...T}}>Recent Transactions</p>
+                  <div style={{display:"flex",flexDirection:"column",gap:0}}>
+                    {[
+                      {label:"AMD Salary",     sub:"Main wallet · recurring",  amt:"+$812",  cur:"֏315,000 AMD",pos:true},
+                      {label:"Lunch Yerevan",  sub:"Food · today",              amt:"-$12.05", cur:"֏4,700 AMD",  pos:false},
+                      {label:"Grab Jakarta",   sub:"Transport · yesterday",     amt:"-$4.32",  cur:"Rp 75,200",   pos:false},
+                      {label:"Freelance GBP",  sub:"USD wallet · 2 days ago",   amt:"+$101.60",cur:"\u00A380 GBP",    pos:true},
+                    ].map((tx,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<3?`1px solid ${bdr}`:"none",transition:"border-color 0.5s"}}>
+                        <div style={{width:34,height:34,borderRadius:12,background:tx.pos?"rgba(16,185,129,0.12)":"rgba(244,63,94,0.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                          {tx.pos?<TrendingUp size={14} style={{color:"#10b981"}}/>:<TrendingDown size={14} style={{color:"#f43f5e"}}/>}
+                        </div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <p style={{fontSize:13,fontWeight:500,color:fg,margin:0,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",...T}}>{tx.label}</p>
+                          <p style={{fontSize:11,color:fgSub,margin:0,...T}}>{tx.sub}</p>
+                        </div>
+                        <div style={{textAlign:"right",flexShrink:0}}>
+                          <p style={{fontSize:13,fontWeight:600,color:tx.pos?"#10b981":"#f43f5e",margin:0,fontVariantNumeric:"tabular-nums"}}>{tx.amt}</p>
+                          <p style={{fontSize:10,color:fgSub,margin:0,fontVariantNumeric:"tabular-nums",...T}}>{tx.cur}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </FadeUp>
+            </div>
+          </div>
+        </section>
+
+        <div style={{height:1,background:bdr,transition:"background 0.5s"}}/>
+
+        {/* ── PERCEPTION ── */}
+        <section className="lp-sec" style={{padding:"100px 24px",position:"relative",zIndex:2}} id="perception">
+          <div style={{maxWidth:1100,margin:"0 auto"}}>
+            <FadeUp>
+              <p style={{fontSize:11.5,fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",color:irSolid,marginBottom:14,transition:"color 0.5s"}}>Why it exists</p>
+              <h2 style={{fontSize:"clamp(28px,5vw,60px)",fontWeight:700,letterSpacing:"-0.038em",lineHeight:1.06,color:fg,marginBottom:18,...T}}>$1 hits different<br/>everywhere you go.</h2>
+              <p style={{fontSize:17,lineHeight:1.72,color:fgMuted,maxWidth:460,marginBottom:48,...T}}>Numbers lie. 4,700 AMD sounds cheap until you do the math. Perceiva does it for you — instantly, every time.</p>
+            </FadeUp>
+            <div className="perc-grid" style={{display:"grid",gridTemplateColumns:"160px repeat(5,1fr)",gap:2,borderRadius:22,overflow:"hidden",border:`1px solid ${bdr}`,background:bdr,transition:"border-color 0.5s,background 0.5s"}}>
+              <FadeUp delay={0.05}>
+                <div className="perc-anc" style={{display:"flex",flexDirection:"column",justifyContent:"center",padding:"40px 22px",background:irDim,gap:4,height:"100%",transition:"background 0.5s"}}>
+                  <span style={{fontSize:10,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:irSolid,transition:"color 0.5s"}}>anchor</span>
+                  <span className="perc-big" style={{fontSize:42,fontWeight:700,letterSpacing:"-0.04em",color:fg,fontVariantNumeric:"tabular-nums",...T}}>$1.00</span>
+                  <span style={{fontSize:11,fontWeight:600,letterSpacing:"0.08em",color:fgSub,...T}}>USD</span>
+                </div>
+              </FadeUp>
+              {PERCEPTION.map((p,i)=>(
+                <FadeUp key={p.code} delay={0.05+i*0.08}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <motion.div whileHover={{ scale: 1.03, y: -3 }} transition={{ type: "spring", ...SPF }}
-                        style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "44px 18px", background: dark ? "rgba(255,255,255,0.018)" : surface, gap: 5, cursor: "default", height: "100%", transition: "background 0.25s" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                          <Badge variant="outline" style={{ fontSize: 9, padding: "2px 7px", fontWeight: 700, letterSpacing: "0.07em", borderColor: bdr, color: fgSub, background: "transparent", ...T }}>{p.code}</Badge>
-                          <span style={{ fontSize: 10, color: fgSub, ...T }}>{p.label}</span>
+                      <motion.div whileHover={{scale:1.03,y:-3}} transition={{type:"spring",...SPF}}
+                        style={{display:"flex",flexDirection:"column",justifyContent:"center",padding:"40px 16px",background:dark?"rgba(255,255,255,0.018)":surface,gap:5,cursor:"default",height:"100%",transition:"background 0.25s"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                          <Badge variant="outline" style={{fontSize:9,padding:"2px 7px",fontWeight:700,letterSpacing:"0.07em",borderColor:bdr,color:fgSub,background:"transparent",...T}}>{p.code}</Badge>
+                          <span style={{fontSize:10,color:fgSub,...T}}>{p.label}</span>
                         </div>
-                        <span style={{ fontSize: "clamp(20px,2.5vw,28px)", fontWeight: 700, letterSpacing: "-0.03em", color: fg, fontVariantNumeric: "tabular-nums", ...T }}>{p.sym}{p.amount}</span>
-                        {p.note && <span style={{ fontSize: 11, color: fgSub, fontStyle: "italic", ...T }}>{p.note}</span>}
+                        <span style={{fontSize:"clamp(18px,2.2vw,26px)",fontWeight:700,letterSpacing:"-0.03em",color:fg,fontVariantNumeric:"tabular-nums",...T}}>{p.sym}{p.amount}</span>
+                        {p.note&&<span style={{fontSize:11,color:fgSub,fontStyle:"italic",...T}}>{p.note}</span>}
                       </motion.div>
                     </TooltipTrigger>
-                    <TooltipContent><p style={{ fontSize: 12, fontWeight: 500 }}>1 USD = {p.sym}{p.amount} {p.code}</p></TooltipContent>
+                    <TooltipContent><p style={{fontSize:12,fontWeight:500}}>1 USD = {p.sym}{p.amount} {p.code}</p></TooltipContent>
                   </Tooltip>
                 </FadeUp>
               ))}
             </div>
-
-            <FadeUp delay={0.3}>
-              <p style={{ marginTop: 14, fontSize: 11.5, color: fgSub, ...T }}>
-                Rates updated live via Frankfurter API. Reference: xe.com — 1 USD = Rp 17,417 IDR (May 2026).
-              </p>
-            </FadeUp>
+            <FadeUp delay={0.3}><p style={{marginTop:12,fontSize:11.5,color:fgSub,...T}}>Rates via Frankfurter API. Reference: xe.com (May 2026).</p></FadeUp>
           </div>
         </section>
 
-        <div style={{ height: 1, background: bdr, transition: "background 0.5s" }} />
+        <div style={{height:1,background:bdr,transition:"background 0.5s"}}/>
 
         {/* ── FEATURES ── */}
-        <section className="lp-sec" style={{ padding: "120px 24px", position: "relative", zIndex: 2 }} id="what">
-          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <section className="lp-sec" style={{padding:"100px 24px",position:"relative",zIndex:2}} id="what">
+          <div style={{maxWidth:1100,margin:"0 auto"}}>
             <FadeUp>
-              <p style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: accent, marginBottom: 14, transition: "color 0.5s" }}>What it does</p>
-              <h2 style={{ fontSize: "clamp(30px,5vw,62px)", fontWeight: 700, letterSpacing: "-0.038em", lineHeight: 1.06, color: fg, marginBottom: 48, ...T }}>Every currency.<br />One dashboard.</h2>
+              <p style={{fontSize:11.5,fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",color:irSolid,marginBottom:14,transition:"color 0.5s"}}>What it does</p>
+              <h2 style={{fontSize:"clamp(28px,5vw,60px)",fontWeight:700,letterSpacing:"-0.038em",lineHeight:1.06,color:fg,marginBottom:48,...T}}>Every currency.<br/>One dashboard.</h2>
             </FadeUp>
-            <FadeUp delay={0.1}>
-              <div className="feat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 2, borderRadius: 22, overflow: "hidden", border: `1px solid ${bdr}`, background: bdr, transition: "border-color 0.5s, background 0.5s" }}>
-                {FEATURES.map((f, i) => {
-                  const Icon = f.icon;
-                  return (
-                    <motion.div key={i} whileHover={{ y: -5, scale: 1.01 }} transition={{ type: "spring", ...SPF }}
-                      style={{ padding: "38px 30px", background: dark ? "rgba(255,255,255,0.014)" : surface, display: "flex", flexDirection: "column", gap: 12, cursor: "default", transition: "background 0.3s" }}>
-                      <motion.div whileHover={{ rotate: 10, scale: 1.14 }} transition={{ type: "spring", stiffness: 300, damping: 14 }}
-                        style={{ width: 42, height: 42, borderRadius: 13, background: accentDim, border: `1px solid ${accentBdr}`, display: "flex", alignItems: "center", justifyContent: "center", color: accent, flexShrink: 0, transition: "background 0.5s, border-color 0.5s, color 0.5s" }}>
-                        <Icon size={18} />
+            <FadeUp delay={0.08}>
+              <div className="feat-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:2,borderRadius:22,overflow:"hidden",border:`1px solid ${bdr}`,background:bdr,transition:"border-color 0.5s,background 0.5s"}}>
+                {FEATURES.map((f,i)=>{
+                  const Icon=f.icon;
+                  return(
+                    <motion.div key={i} whileHover={{y:-5,scale:1.01}} transition={{type:"spring",...SPF}}
+                      style={{padding:"36px 28px",background:dark?"rgba(255,255,255,0.014)":surface,display:"flex",flexDirection:"column",gap:12,cursor:"default",transition:"background 0.3s"}}>
+                      <motion.div whileHover={{rotate:10,scale:1.14}} transition={{type:"spring",stiffness:300,damping:14}}
+                        style={{width:40,height:40,borderRadius:12,background:irDim,border:`1px solid ${irBdr}`,display:"flex",alignItems:"center",justifyContent:"center",color:irSolid,flexShrink:0,transition:"all 0.5s"}}>
+                        <Icon size={17}/>
                       </motion.div>
-                      <h3 style={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.02em", color: fg, lineHeight: 1.3, margin: 0, ...T }}>{f.title}</h3>
-                      <p style={{ fontSize: 13.5, lineHeight: 1.65, color: fgMuted, margin: 0, ...T }}>{f.body}</p>
+                      <h3 style={{fontSize:14,fontWeight:600,letterSpacing:"-0.02em",color:fg,lineHeight:1.3,margin:0,...T}}>{f.title}</h3>
+                      <p style={{fontSize:13,lineHeight:1.65,color:fgMuted,margin:0,...T}}>{f.body}</p>
                     </motion.div>
                   );
                 })}
@@ -574,32 +902,29 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <div style={{ height: 1, background: bdr, transition: "background 0.5s" }} />
+        <div style={{height:1,background:bdr,transition:"background 0.5s"}}/>
 
         {/* ── WHO ── */}
-        <section className="lp-sec" style={{ padding: "120px 24px", position: "relative", zIndex: 2 }} id="who">
-          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <section className="lp-sec" style={{padding:"100px 24px",position:"relative",zIndex:2}} id="who">
+          <div style={{maxWidth:1100,margin:"0 auto"}}>
             <FadeUp>
-              <p style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: accent, marginBottom: 14, transition: "color 0.5s" }}>Who it is for</p>
-              <h2 style={{ fontSize: "clamp(30px,5vw,62px)", fontWeight: 700, letterSpacing: "-0.038em", lineHeight: 1.06, color: fg, marginBottom: 52, ...T }}>
-                For anyone who earns in one world<br />and lives in another.
-              </h2>
+              <p style={{fontSize:11.5,fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",color:irSolid,marginBottom:14,transition:"color 0.5s"}}>Who it is for</p>
+              <h2 style={{fontSize:"clamp(28px,5vw,60px)",fontWeight:700,letterSpacing:"-0.038em",lineHeight:1.06,color:fg,marginBottom:52,...T}}>For anyone who earns in one world<br/>and lives in another.</h2>
             </FadeUp>
-            <div className="who-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18 }}>
+            <div className="who-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:18}}>
               {[
-                { n: "01", title: "The expat juggling three currencies",  body: "Company pays USD. Landlord wants AMD. Family needs IDR. Perceiva holds all of it without losing the thread." },
-                { n: "02", title: "The freelancer with global clients",   body: "GBP from London, EUR from Berlin, USD from New York. Everything converts at the moment it lands." },
-                { n: "03", title: "The traveler who stops tracking",      body: "12,000 AMD on lunch feels fine until you see it is Rp 207,000. Perceiva makes that visible before it becomes a habit." },
-              ].map((w, i) => (
-                <FadeUp key={i} delay={i * 0.09}>
-                  <motion.div whileHover={{ y: -7 }} transition={{ type: "spring", ...SPF }}
-                    style={{ padding: "38px 28px", background: dark ? "rgba(255,255,255,0.025)" : surface, border: `1px solid ${bdr}`, borderRadius: 22, display: "flex", flexDirection: "column", gap: 12, cursor: "default", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.5s" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", color: accent, fontFamily: '"SF Mono",ui-monospace,monospace', transition: "color 0.5s" }}>{w.n}</span>
-                    <h3 style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-0.02em", color: fg, lineHeight: 1.3, margin: 0, ...T }}>{w.title}</h3>
-                    <p style={{ fontSize: 14, lineHeight: 1.72, color: fgMuted, margin: 0, ...T }}>{w.body}</p>
-                    <motion.div initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }}
-                      transition={{ delay: 0.3 + i * 0.1, duration: 0.65, ease: EASE }}
-                      style={{ position: "absolute", bottom: 0, left: 0, height: 2, width: "100%", background: `linear-gradient(90deg,${accent},transparent)`, transformOrigin: "left", transition: "background 0.5s" }} />
+                {n:"01",title:"The expat juggling three currencies", body:"Company pays USD. Landlord wants AMD. Family needs IDR. Perceiva holds all of it without losing the thread."},
+                {n:"02",title:"The freelancer with global clients",  body:"GBP from London, EUR from Berlin, USD from New York. Everything converts at the moment it lands."},
+                {n:"03",title:"The traveler who stops tracking",     body:"12,000 AMD on lunch feels fine until you see it is Rp 207,000. Perceiva makes that visible before it becomes a habit."},
+              ].map((w,i)=>(
+                <FadeUp key={i} delay={i*0.09}>
+                  <motion.div whileHover={{y:-7}} transition={{type:"spring",...SPF}}
+                    style={{padding:"36px 26px",background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:22,display:"flex",flexDirection:"column",gap:12,cursor:"default",position:"relative",overflow:"hidden",transition:"background 0.3s,border-color 0.5s"}}>
+                    <span style={{fontSize:11,fontWeight:700,letterSpacing:"0.12em",color:irSolid,fontFamily:'"SF Mono",ui-monospace,monospace',transition:"color 0.5s"}}>{w.n}</span>
+                    <h3 style={{fontSize:16,fontWeight:600,letterSpacing:"-0.02em",color:fg,lineHeight:1.3,margin:0,...T}}>{w.title}</h3>
+                    <p style={{fontSize:14,lineHeight:1.72,color:fgMuted,margin:0,...T}}>{w.body}</p>
+                    <motion.div initial={{scaleX:0}} whileInView={{scaleX:1}} viewport={{once:true}} transition={{delay:0.3+i*0.1,duration:0.65,ease:EASE}}
+                      style={{position:"absolute",bottom:0,left:0,height:2,width:"100%",background:`linear-gradient(90deg,${irSolid},transparent)`,transformOrigin:"left",transition:"background 0.5s"}}/>
                   </motion.div>
                 </FadeUp>
               ))}
@@ -608,37 +933,35 @@ export default function LandingPage() {
         </section>
 
         {/* ── FROM THE CREATOR ── */}
-        <div style={{ height: 1, background: bdr, transition: "background 0.5s" }} />
-        <section className="lp-sec" style={{ padding: "100px 24px", position: "relative", zIndex: 2 }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-            <FadeUp>
-              <p style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: accent, marginBottom: 14, transition: "color 0.5s" }}>From the creator</p>
-            </FadeUp>
+        <div style={{height:1,background:bdr,transition:"background 0.5s"}}/>
+        <section className="lp-sec" style={{padding:"100px 24px",position:"relative",zIndex:2}}>
+          <div style={{maxWidth:1100,margin:"0 auto"}}>
+            <FadeUp><p style={{fontSize:11.5,fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",color:irSolid,marginBottom:14,transition:"color 0.5s"}}>From the creator</p></FadeUp>
             <FadeUp delay={0.08}>
-              <motion.div whileHover={{ y: -4 }} transition={{ type: "spring", ...SPF }}>
-                <Card style={{ background: dark ? "rgba(255,255,255,0.025)" : surface, border: `1px solid ${bdr}`, borderRadius: 24, overflow: "hidden", transition: "background 0.3s, border-color 0.5s", maxWidth: 720 }}>
-                  <CardHeader style={{ paddingBottom: 10 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                      <Avatar style={{ width: 48, height: 48 }}>
-                        <AvatarFallback style={{ background: accentDim, color: accent, fontWeight: 700, fontSize: 16, transition: "background 0.5s, color 0.5s" }}>RZ</AvatarFallback>
+              <motion.div whileHover={{y:-4}} transition={{type:"spring",...SPF}}>
+                <Card style={{background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:24,overflow:"hidden",transition:"background 0.3s,border-color 0.5s",maxWidth:720}}>
+                  <CardHeader style={{paddingBottom:10}}>
+                    <div style={{display:"flex",alignItems:"center",gap:14}}>
+                      <Avatar style={{width:48,height:48}}>
+                        <AvatarFallback style={{background:irDim,color:irSolid,fontWeight:700,fontSize:16,transition:"background 0.5s,color 0.5s"}}>RZ</AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle style={{ fontSize: 15, color: fg, ...T }}>Ren</CardTitle>
-                        <CardDescription style={{ fontSize: 12, color: fgSub, ...T }}>Builder of Perceiva</CardDescription>
+                        <CardTitle style={{fontSize:15,color:fg,...T}}>Ren</CardTitle>
+                        <CardDescription style={{fontSize:12,color:fgSub,...T}}>Builder of Perceiva</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent style={{ paddingTop: 4 }}>
-                    <p style={{ fontSize: 15, lineHeight: 1.75, color: fgMuted, margin: 0, ...T }}>
+                  <CardContent style={{paddingTop:4}}>
+                    <p style={{fontSize:15,lineHeight:1.8,color:fgMuted,margin:0,...T}}>
                       I built Perceiva because I was living in Armenia, getting paid in both AMD and USD,
                       and sending money back in IDR. Every time I spent 4,700 AMD on something I thought
                       it was nothing. Then I checked the IDR equivalent and realized I was just not perceiving
                       what I was actually spending. No app I tried handled multiple currencies in a way that
                       actually made sense. So I made one. This is it.
                     </p>
-                    <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ width: 28, height: 2, background: accent, borderRadius: 9999, transition: "background 0.5s" }} />
-                      <span style={{ fontSize: 12, color: fgSub, fontStyle: "italic", ...T }}>Yerevan, Armenia — 2025</span>
+                    <div style={{marginTop:16,display:"flex",alignItems:"center",gap:8}}>
+                      <div style={{width:28,height:2,background:irSolid,borderRadius:9999,transition:"background 0.5s"}}/>
+                      <span style={{fontSize:12,color:fgSub,fontStyle:"italic",...T}}>Yerevan, Armenia — 2025</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -648,21 +971,14 @@ export default function LandingPage() {
         </section>
 
         {/* ── STATS ── */}
-        <div style={{ padding: "72px 24px", borderTop: `1px solid ${bdr}`, borderBottom: `1px solid ${bdr}`, background: dark ? "rgba(255,255,255,0.01)" : "rgba(0,0,0,0.016)", position: "relative", zIndex: 2, transition: "background 0.5s, border-color 0.5s" }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-            <div className="stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 2, borderRadius: 22, overflow: "hidden", border: `1px solid ${bdr}`, background: bdr, transition: "border-color 0.5s, background 0.5s" }}>
-              {[
-                { v: 8,   s: "+",    l: "Currencies, more coming" },
-                { v: 100, s: "%",    l: "Free, no credit card" },
-                { v: 5,   s: " min", l: "To set up and log your first transaction" },
-                { v: 0,   s: "",     l: "Mental math required" },
-              ].map((s, i) => (
-                <FadeIn key={i} delay={i * 0.07}>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: "50px 18px", background: dark ? "rgba(255,255,255,0.014)" : surface, textAlign: "center", transition: "background 0.5s" }}>
-                    <span style={{ fontSize: "clamp(40px,4vw,54px)", fontWeight: 700, letterSpacing: "-0.045em", color: fg, fontVariantNumeric: "tabular-nums", lineHeight: 1, ...T }}>
-                      <Counter to={s.v} suffix={s.s} />
-                    </span>
-                    <span style={{ fontSize: 13, color: fgMuted, maxWidth: 110, lineHeight: 1.45, ...T }}>{s.l}</span>
+        <div style={{padding:"68px 24px",borderTop:`1px solid ${bdr}`,borderBottom:`1px solid ${bdr}`,background:dark?"rgba(255,255,255,0.01)":"rgba(0,0,0,0.015)",position:"relative",zIndex:2,transition:"background 0.5s,border-color 0.5s"}}>
+          <div style={{maxWidth:1100,margin:"0 auto"}}>
+            <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:2,borderRadius:22,overflow:"hidden",border:`1px solid ${bdr}`,background:bdr,transition:"border-color 0.5s,background 0.5s"}}>
+              {[{v:10,s:"+",l:"Currencies supported"},{v:100,s:"%",l:"Free, no credit card"},{v:5,s:" min",l:"To set up and log your first transaction"},{v:0,s:"",l:"Mental math required"}].map((s,i)=>(
+                <FadeIn key={i} delay={i*0.07}>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8,padding:"48px 18px",background:dark?"rgba(255,255,255,0.014)":surface,textAlign:"center",transition:"background 0.5s"}}>
+                    <span style={{fontSize:"clamp(38px,4vw,52px)",fontWeight:700,letterSpacing:"-0.045em",color:fg,fontVariantNumeric:"tabular-nums",lineHeight:1,...T}}><Counter to={s.v} suffix={s.s}/></span>
+                    <span style={{fontSize:12,color:fgMuted,maxWidth:110,lineHeight:1.45,...T}}>{s.l}</span>
                   </div>
                 </FadeIn>
               ))}
@@ -670,102 +986,32 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* ── WHAT YOU GET ── */}
-        <section className="lp-sec" style={{ padding: "100px 24px", position: "relative", zIndex: 2 }}>
-          <div className="check-grid" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
-            <FadeUp>
-              <p style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: accent, marginBottom: 14, transition: "color 0.5s" }}>What you get</p>
-              <h2 style={{ fontSize: "clamp(26px,4vw,50px)", fontWeight: 700, letterSpacing: "-0.035em", lineHeight: 1.08, color: fg, marginBottom: 32, ...T }}>Everything you need.<br />Nothing you don't.</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {[
-                  "Live multi-currency conversion on every log",
-                  "Skeuomorphic wallet cards you can customize",
-                  "Budget limits with real-time spend tracking",
-                  "Recurring transaction scheduling",
-                  "Perception check — see what $1 actually looks like",
-                  "Google + email auth, your data stays yours",
-                  "More currencies being added regularly",
-                ].map((item, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-                    transition={{ delay: i * 0.06, duration: 0.5 }}
-                    style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", background: accentDim, border: `1px solid ${accentBdr}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2, transition: "background 0.5s, border-color 0.5s" }}>
-                      <Check size={11} style={{ color: accent, transition: "color 0.5s" }} />
-                    </div>
-                    <span style={{ fontSize: 14, color: fgMuted, lineHeight: 1.6, ...T }}>{item}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </FadeUp>
-            <FadeUp delay={0.15}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: fgSub, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px", ...T }}>Currency support</p>
-                {[
-                  { label: "USD / GBP / EUR / CHF", pct: 100 },
-                  { label: "CNY / AMD / RUB / IDR", pct: 100 },
-                  { label: "JPY / KRW / AED",       pct: 55  },
-                  { label: "BRL / MXN / INR",       pct: 25  },
-                ].map((row, i) => (
-                  <div key={i} style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: 13, color: fgMuted, fontFamily: '"SF Mono",ui-monospace,monospace', ...T }}>{row.label}</span>
-                      <Badge style={{ fontSize: 10, padding: "2px 8px", background: row.pct === 100 ? accentDim : "transparent", color: row.pct === 100 ? accent : fgSub, border: `1px solid ${row.pct === 100 ? accentBdr : bdr}`, borderRadius: 980, fontWeight: 600, transition: "all 0.5s" }}>
-                        {row.pct === 100 ? "Live" : "Coming soon"}
-                      </Badge>
-                    </div>
-                    <div style={{ height: 5, borderRadius: 9999, background: dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)", overflow: "hidden", transition: "background 0.5s" }}>
-                      <motion.div initial={{ width: 0 }} whileInView={{ width: `${row.pct}%` }} viewport={{ once: true }}
-                        transition={{ duration: 0.9, delay: i * 0.1, ease: EASE }}
-                        style={{ height: "100%", background: accent, borderRadius: 9999, transition: "background 0.5s" }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </FadeUp>
-          </div>
-        </section>
-
         {/* ── CTA ── */}
-        <section style={{ padding: "140px 24px 120px", textAlign: "center", position: "relative", overflow: "hidden", zIndex: 2 }}>
-          <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 22, position: "relative", zIndex: 2 }}>
-            <FadeUp>
-              <h2 style={{ fontSize: "clamp(36px,7vw,82px)", fontWeight: 700, letterSpacing: "-0.045em", lineHeight: 1.02, color: fg, margin: 0, ...T }}>
-                Stop guessing.<br />Start perceiving.
-              </h2>
-            </FadeUp>
-            <FadeUp delay={0.1}>
-              <p style={{ fontSize: 17, color: fgMuted, maxWidth: 360, lineHeight: 1.65, margin: 0, ...T }}>
-                Takes five minutes. Saves you from a lot of "wait, how much is that actually?"
-              </p>
-            </FadeUp>
+        <section className="cta-sec" style={{padding:"130px 24px 110px",textAlign:"center",position:"relative",overflow:"hidden",zIndex:2}}>
+          <div style={{maxWidth:1100,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",gap:22,position:"relative",zIndex:2}}>
+            <FadeUp><h2 style={{fontSize:"clamp(34px,7vw,80px)",fontWeight:700,letterSpacing:"-0.045em",lineHeight:1.02,color:fg,margin:0,...T}}>Stop guessing.<br/>Start perceiving.</h2></FadeUp>
+            <FadeUp delay={0.1}><p style={{fontSize:17,color:fgMuted,maxWidth:360,lineHeight:1.65,margin:0,...T}}>Takes five minutes. Saves you from a lot of "wait, how much is that actually?"</p></FadeUp>
             <FadeUp delay={0.2}>
               <Magnetic>
-                <Link href="/signup"
-                  style={{ display: "inline-flex", alignItems: "center", gap: 8, background: accent, color: "#fff", fontSize: 17, fontWeight: 500, borderRadius: 980, padding: "16px 34px", transition: "background 0.5s, filter 0.2s, transform 0.18s" }}
-                  className="hov-scale">
-                  Create your account <ArrowRight size={17} />
+                <Link href="/signup" style={{display:"inline-flex",alignItems:"center",gap:8,background:irSolid,color:"#fff",fontSize:17,fontWeight:500,borderRadius:980,padding:"16px 34px",transition:"background 0.5s,filter 0.2s"}}>
+                  Create your account <ArrowRight size={17}/>
                 </Link>
               </Magnetic>
             </FadeUp>
-            <FadeUp delay={0.26}>
-              <Link href="/login" style={{ fontSize: 13, color: fgSub, textDecoration: "none", transition: "color 0.3s" }}>
-                Already have an account? Sign in
-              </Link>
-            </FadeUp>
+            <FadeUp delay={0.26}><Link href="/login" style={{fontSize:13,color:fgSub,textDecoration:"none",transition:"color 0.3s"}}>Already have an account? Sign in</Link></FadeUp>
           </div>
-          <div style={{ position: "absolute", top: "25%", left: "50%", transform: "translateX(-50%)", width: 680, height: 380, background: `radial-gradient(ellipse, ${accentDim} 0%, transparent 66%)`, pointerEvents: "none", transition: "background 0.5s" }} />
+          <div style={{position:"absolute",top:"25%",left:"50%",transform:"translateX(-50%)",width:680,height:360,background:`radial-gradient(ellipse,${irDim} 0%,transparent 66%)`,pointerEvents:"none",transition:"background 0.5s"}}/>
         </section>
 
         {/* ── FOOTER ── */}
-        <footer style={{ position: "relative", zIndex: 2 }}>
-          <div style={{ height: 1, background: bdr, transition: "background 0.5s" }} />
-          <div className="foot-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "26px 52px" }}>
-            <span style={{ fontSize: 14, fontWeight: 600, letterSpacing: "-0.02em", color: fgSub, ...T }}>Perceiva</span>
-            <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13, color: fgSub, ...T }}>
+        <footer style={{position:"relative",zIndex:2}}>
+          <div style={{height:1,background:bdr,transition:"background 0.5s"}}/>
+          <div className="foot-inner" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"26px 52px"}}>
+            <span style={{fontSize:14,fontWeight:600,letterSpacing:"-0.02em",color:fgSub,...T}}>Perceiva</span>
+            <span style={{display:"flex",alignItems:"center",gap:5,fontSize:13,color:fgSub,...T}}>
               made with
-              <motion.span animate={{ scale: [1, 1.35, 1] }} transition={{ repeat: Infinity, duration: 1.8, ease: [0.45, 0, 0.55, 1] }}
-                style={{ display: "inline-flex", alignItems: "center" }}>
-                <Heart size={12} fill="#ff453a" color="#ff453a" />
+              <motion.span animate={{scale:[1,1.35,1]}} transition={{repeat:Infinity,duration:1.8,ease:[0.45,0,0.55,1]}} style={{display:"inline-flex",alignItems:"center"}}>
+                <Heart size={12} fill="#ff453a" color="#ff453a"/>
               </motion.span>
               by ren
             </span>
@@ -774,32 +1020,30 @@ export default function LandingPage() {
 
         {/* ── HOW IT WORKS dialog ── */}
         <Dialog open={demoOpen} onOpenChange={setDemoOpen}>
-          <DialogContent style={{ maxWidth: 520, background: surface, borderColor: bdr, borderRadius: 24, transition: "background 0.5s" }}>
+          <DialogContent style={{maxWidth:520,background:surface,borderColor:bdr,borderRadius:24,transition:"background 0.5s"}}>
             <DialogHeader>
-              <DialogTitle style={{ color: fg, fontSize: 20, ...T }}>How Perceiva works</DialogTitle>
-              <DialogDescription style={{ color: fgMuted, fontSize: 14, ...T }}>Three steps from chaos to clarity.</DialogDescription>
+              <DialogTitle style={{color:fg,fontSize:20,...T}}>How Perceiva works</DialogTitle>
+              <DialogDescription style={{color:fgMuted,fontSize:14,...T}}>Three steps from chaos to clarity.</DialogDescription>
             </DialogHeader>
-            <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 8 }}>
+            <div style={{display:"flex",flexDirection:"column",gap:20,marginTop:8}}>
               {[
-                { n: "01", title: "Connect your wallets",   body: "Create wallets for AMD, USD, IDR. Name them, pick a card style." },
-                { n: "02", title: "Log any transaction",    body: "Type the amount in whatever currency you have. We convert it to USD instantly using live rates." },
-                { n: "03", title: "See the real picture",   body: "Your dashboard shows everything unified. No mental math. No surprises at month end." },
-              ].map((s, i) => (
-                <motion.div key={i} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
-                  style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: accentDim, border: `1px solid ${accentBdr}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11, fontWeight: 700, color: accent, fontFamily: '"SF Mono",ui-monospace,monospace', transition: "background 0.5s, border-color 0.5s, color 0.5s" }}>{s.n}</div>
+                {n:"01",title:"Connect your wallets",body:"Create wallets for AMD, USD, IDR. Name them, pick a card style."},
+                {n:"02",title:"Log any transaction",body:"Type the amount in whatever currency you have. We convert it to USD instantly using live rates."},
+                {n:"03",title:"See the real picture",body:"Your dashboard shows everything unified. No mental math. No surprises at month end."},
+              ].map((s,i)=>(
+                <motion.div key={i} initial={{opacity:0,x:-12}} animate={{opacity:1,x:0}} transition={{delay:i*0.1}}
+                  style={{display:"flex",gap:16,alignItems:"flex-start"}}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:irDim,border:`1px solid ${irBdr}`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:11,fontWeight:700,color:irSolid,fontFamily:'"SF Mono",ui-monospace,monospace',transition:"all 0.5s"}}>{s.n}</div>
                   <div>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: fg, margin: "0 0 4px", ...T }}>{s.title}</p>
-                    <p style={{ fontSize: 13, lineHeight: 1.65, color: fgMuted, margin: 0, ...T }}>{s.body}</p>
+                    <p style={{fontSize:14,fontWeight:600,color:fg,margin:"0 0 4px",...T}}>{s.title}</p>
+                    <p style={{fontSize:13,lineHeight:1.65,color:fgMuted,margin:0,...T}}>{s.body}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
-            <div style={{ marginTop: 8 }}>
-              <Link href="/signup" onClick={() => setDemoOpen(false)}>
-                <Button className="w-full" style={{ background: accent, color: "#fff", border: "none", borderRadius: 12, transition: "background 0.5s" }}>
-                  Get started now <ArrowRight size={15} />
-                </Button>
+            <div style={{marginTop:8}}>
+              <Link href="/signup" onClick={()=>setDemoOpen(false)}>
+                <Button className="w-full" style={{background:irSolid,color:"#fff",border:"none",borderRadius:12,transition:"background 0.5s"}}>Get started now <ArrowRight size={15}/></Button>
               </Link>
             </div>
           </DialogContent>
