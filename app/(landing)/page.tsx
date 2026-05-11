@@ -97,6 +97,63 @@ const GLOBAL_CSS = `
   }
   .hov-lift:hover { transform:translateY(-2px); }
 
+  /* ── Skiper-inspired enhancements ── */
+  .stat-flex-item { flex: 1 1 180px; min-width: 160px; }
+
+  /* animated label underline */
+  .lp-label-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+  }
+  .lp-label-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1.5px;
+    background: currentColor;
+    border-radius: 9999px;
+    transition: width 0.4s cubic-bezier(0.16,1,0.3,1);
+  }
+  .lp-label-link:hover::after { width: 100%; }
+
+  /* bento card hover glow */
+  .bento-glow {
+    position: relative;
+    overflow: hidden;
+  }
+  .bento-glow::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: conic-gradient(from 180deg at 50% 50%, transparent 0deg, var(--ir-solid) 60deg, transparent 120deg);
+    opacity: 0;
+    transition: opacity 0.4s;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .bento-glow:hover::before { opacity: 0.15; }
+
+  /* shimmer text effect for CTA */
+  @keyframes shimmerText {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  /* card flip transition */
+  .card-float {
+    animation: floatY 4s ease-in-out infinite;
+  }
+  @keyframes floatY {
+    0%,100% { transform: translateY(0px); }
+    50%      { transform: translateY(-8px); }
+  }
+
   /* ── Button overrides ── */
   .btn-primary {
     display: inline-flex;
@@ -378,6 +435,77 @@ function Marquee({ items, dark }: { items: string[]; dark: boolean }) {
           </span>
         ))}
       </motion.div>
+    </div>
+  );
+}
+
+// ─── Card theme carousel ─────────────────────────────────────────────────────
+const CARD_THEMES_PREVIEW = [
+  { name:"Space Grey",   grad:"linear-gradient(135deg,#2C2C2E 0%,#48484A 50%,#1C1C1E 100%)", text:"#f0f0f0", sub:"rgba(240,240,240,0.5)" },
+  { name:"Starlight",    grad:"linear-gradient(135deg,#E8E8ED 0%,#F5F5F7 50%,#D2D2D7 100%)", text:"#1d1d1f", sub:"rgba(29,29,31,0.5)" },
+  { name:"Midnight",     grad:"linear-gradient(135deg,#1A1A2E 0%,#16213E 50%,#0F3460 100%)", text:"#f0f0f0", sub:"rgba(240,240,240,0.5)" },
+  { name:"Product Red",  grad:"linear-gradient(135deg,#BF0000 0%,#E31212 50%,#8B0000 100%)", text:"#fff",    sub:"rgba(255,255,255,0.55)" },
+  { name:"Alpine Green", grad:"linear-gradient(135deg,#1B4D3E 0%,#2D6A4F 50%,#1B4D3E 100%)", text:"#fff",   sub:"rgba(255,255,255,0.55)" },
+  { name:"Deep Purple",  grad:"linear-gradient(135deg,#2D1B69 0%,#4A2C8F 50%,#1A0F3D 100%)", text:"#fff",   sub:"rgba(255,255,255,0.55)" },
+  { name:"Gold",         grad:"linear-gradient(135deg,#C8A96E 0%,#E8D5A3 40%,#B8965A 100%)", text:"#2d1a00",sub:"rgba(45,26,0,0.5)" },
+  { name:"Ocean Blue",   grad:"linear-gradient(135deg,#0077B6 0%,#00B4D8 50%,#0077B6 100%)", text:"#fff",   sub:"rgba(255,255,255,0.55)" },
+];
+
+function CardCarousel({ dark }: { dark: boolean }) {
+  const [active, setActive] = useState(0);
+  const theme = CARD_THEMES_PREVIEW[active];
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:20}}>
+      {/* main card */}
+      <div style={{perspective:1000}}>
+        <motion.div
+          key={active}
+          initial={{opacity:0,rotateY:-12,scale:0.96}}
+          animate={{opacity:1,rotateY:0,scale:1}}
+          transition={{duration:0.45,ease:[0.16,1,0.3,1]}}
+          className="card-float"
+          style={{width:320,aspectRatio:"85.6/53.98",borderRadius:20,background:theme.grad,
+            boxShadow:dark?"0 28px 70px rgba(0,0,0,0.65),0 6px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.12)":"0 28px 70px rgba(0,0,0,0.15),0 6px 20px rgba(0,0,0,0.08),inset 0 1px 0 rgba(255,255,255,0.7)",
+            position:"relative",overflow:"hidden",cursor:"default"}}>
+          {/* foil overlay */}
+          <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,rgba(255,255,255,0.22) 0%,rgba(255,255,255,0.04) 40%,rgba(0,0,0,0.04) 60%,rgba(255,255,255,0.08) 100%)",zIndex:1,pointerEvents:"none"}}/>
+          {/* gloss strip */}
+          <div style={{position:"absolute",top:0,left:"-30%",width:"55%",height:"100%",background:"linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.1) 50%,transparent 60%)",zIndex:2,transform:"skewX(-15deg)",pointerEvents:"none"}}/>
+          {/* chip */}
+          <div style={{position:"absolute",top:24,left:22,zIndex:3}}>
+            <svg viewBox="0 0 50 40" width={40} height={30} style={{opacity:0.7}}>
+              <rect x="1" y="1" width="48" height="38" rx="6" fill="none" stroke={theme.text} strokeWidth="1.2" opacity="0.5"/>
+              <rect x="10" y="1" width="4" height="38" fill={theme.text} opacity="0.2"/>
+              <rect x="36" y="1" width="4" height="38" fill={theme.text} opacity="0.2"/>
+              <rect x="1" y="12" width="48" height="4" fill={theme.text} opacity="0.2"/>
+              <rect x="1" y="24" width="48" height="4" fill={theme.text} opacity="0.2"/>
+            </svg>
+          </div>
+          {/* balance */}
+          <div style={{position:"absolute",bottom:28,left:22,zIndex:3}}>
+            <p style={{fontSize:9,fontWeight:700,letterSpacing:"0.1em",textTransform:"uppercase",color:theme.sub,margin:"0 0 3px"}}>Balance</p>
+            <p style={{fontSize:24,fontWeight:700,letterSpacing:"-0.03em",color:theme.text,margin:0,fontVariantNumeric:"tabular-nums"}}>$4,271.00</p>
+          </div>
+          <div style={{position:"absolute",bottom:10,left:22,right:22,zIndex:3,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <p style={{fontSize:10,fontFamily:'"SF Mono",monospace',letterSpacing:"0.15em",color:theme.sub,margin:0}}>●●●● ●●●● 4291</p>
+            <p style={{fontSize:9,fontWeight:700,letterSpacing:"0.08em",color:theme.sub,margin:0}}>PERCEIVA</p>
+          </div>
+          {/* decorative circles */}
+          <div style={{position:"absolute",top:-24,right:-24,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.05)",zIndex:0}}/>
+        </motion.div>
+      </div>
+
+      {/* theme dots */}
+      <div style={{display:"flex",gap:8,alignItems:"center"}}>
+        {CARD_THEMES_PREVIEW.map((t,i) => (
+          <motion.button key={i} onClick={()=>setActive(i)}
+            whileHover={{scale:1.2}} whileTap={{scale:0.9}}
+            style={{width:i===active?28:10,height:10,borderRadius:9999,background:i===active?t.grad:"rgba(128,128,128,0.25)",border:"none",cursor:"pointer",padding:0,transition:"width 0.3s,background 0.3s"}}
+          />
+        ))}
+      </div>
+      <p style={{fontSize:12,color:"rgba(128,128,128,0.6)",margin:0,fontStyle:"italic"}}>{theme.name}</p>
     </div>
   );
 }
@@ -760,12 +888,11 @@ export default function LandingPage() {
             </FadeUp>
 
             <div className="card-preview-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:60,alignItems:"center"}}>
-              {/* 3D card */}
+              {/* Card theme carousel */}
               <FadeUp delay={0.1}>
-                <div style={{display:"flex",justifyContent:"center",position:"relative"}}>
-                  {/* background glow */}
-                  <div className="card-glow-pulse" style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:300,height:200,background:`radial-gradient(ellipse,${irDim} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0,transition:"background 0.5s"}}/>
-                  <TiltCard3D dark={dark}/>
+                <div style={{position:"relative"}}>
+                  <div className="card-glow-pulse" style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:340,height:220,background:`radial-gradient(ellipse,${irDim} 0%,transparent 70%)`,pointerEvents:"none",zIndex:0,transition:"background 0.5s"}}/>
+                  <CardCarousel dark={dark}/>
                 </div>
               </FadeUp>
 
@@ -986,7 +1113,7 @@ export default function LandingPage() {
               <h2 style={{fontSize:"clamp(28px,5vw,60px)",fontWeight:700,letterSpacing:"-0.038em",lineHeight:1.06,color:fg,marginBottom:18,...T}}>$1 hits different<br/>everywhere you go.</h2>
               <p style={{fontSize:17,lineHeight:1.72,color:fgMuted,maxWidth:460,marginBottom:48,...T}}>Numbers lie. £80 sounds expensive until you realize it is the same as a casual lunch in some cities. Perceiva shows you what every number actually means — instantly, every time.</p>
             </FadeUp>
-            <div className="perc-grid" style={{display:"grid",gridTemplateColumns:"160px repeat(5,1fr)",gap:2,borderRadius:22,overflow:"hidden",border:`1px solid ${bdr}`,background:bdr,transition:"border-color 0.5s,background 0.5s"}}>
+            <div className="perc-grid bento-glow" style={{display:"grid",gridTemplateColumns:"160px repeat(5,1fr)",gap:2,borderRadius:22,overflow:"hidden",border:`1px solid ${bdr}`,background:bdr,transition:"border-color 0.5s,background 0.5s"}}>
               <FadeUp delay={0.05}>
                 <div className="perc-anc" style={{display:"flex",flexDirection:"column",justifyContent:"center",padding:"40px 22px",background:irDim,gap:4,height:"100%",transition:"background 0.5s"}}>
                   <span style={{fontSize:10,fontWeight:700,letterSpacing:"0.12em",textTransform:"uppercase",color:irSolid,transition:"color 0.5s"}}>anchor</span>
@@ -1027,7 +1154,7 @@ export default function LandingPage() {
               <h2 style={{fontSize:"clamp(28px,5vw,60px)",fontWeight:700,letterSpacing:"-0.038em",lineHeight:1.06,color:fg,marginBottom:48,...T}}>Every currency.<br/>One dashboard.</h2>
             </FadeUp>
             <FadeUp delay={0.08}>
-              <div className="feat-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:2,borderRadius:22,overflow:"hidden",border:`1px solid ${bdr}`,background:bdr,transition:"border-color 0.5s,background 0.5s"}}>
+              <div className="feat-grid bento-glow" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:2,borderRadius:22,overflow:"hidden",border:`1px solid ${bdr}`,background:bdr,transition:"border-color 0.5s,background 0.5s"}}>
                 {FEATURES.map((f,i)=>{
                   const Icon=f.icon;
                   return(
@@ -1077,50 +1204,26 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── FROM THE CREATOR ── */}
-        <div style={{height:1,background:bdr,transition:"background 0.5s"}}/>
-        <section className="lp-sec" style={{padding:"100px 24px",position:"relative",zIndex:2}}>
-          <div style={{maxWidth:1100,margin:"0 auto"}}>
-            <FadeUp><p style={{fontSize:11.5,fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",color:irSolid,marginBottom:14,transition:"color 0.5s"}}>From the creator</p></FadeUp>
-            <FadeUp delay={0.08}>
-              <motion.div whileHover={{y:-4}} transition={{type:"spring",...SPF}}>
-                <Card style={{background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:24,overflow:"hidden",transition:"background 0.3s,border-color 0.5s",maxWidth:720}}>
-                  <CardHeader style={{paddingBottom:10}}>
-                    <div style={{display:"flex",alignItems:"center",gap:14}}>
-                      <Avatar style={{width:48,height:48}}>
-                        <AvatarFallback style={{background:irDim,color:irSolid,fontWeight:700,fontSize:16,transition:"background 0.5s,color 0.5s"}}>RZ</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <CardTitle style={{fontSize:15,color:fg,...T}}>Ren</CardTitle>
-                        <CardDescription style={{fontSize:12,color:fgSub,...T}}>Builder of Perceiva</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent style={{paddingTop:4}}>
-                    <p style={{fontSize:15,lineHeight:1.8,color:fgMuted,margin:0,...T}}>
-                      I built Perceiva because I was splitting my life across multiple currencies — getting paid in USD and AMD, sending money back in IDR. Every time I spent 4,700 AMD on something it felt like nothing. Then I checked what it was worth in IDR and realized I had completely lost track. No app handled this well. So I built one that does.
-                    </p>
-                    <div style={{marginTop:16,display:"flex",alignItems:"center",gap:8}}>
-                      <div style={{width:28,height:2,background:irSolid,borderRadius:9999,transition:"background 0.5s"}}/>
-                      <span style={{fontSize:12,color:fgSub,fontStyle:"italic",...T}}>Yerevan, Armenia — 2025</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </FadeUp>
-          </div>
-        </section>
-
+        
         {/* ── STATS ── */}
-        <div style={{padding:"68px 24px",borderTop:`1px solid ${bdr}`,borderBottom:`1px solid ${bdr}`,background:dark?"rgba(255,255,255,0.01)":"rgba(0,0,0,0.015)",position:"relative",zIndex:2,transition:"background 0.5s,border-color 0.5s"}}>
+        <div style={{padding:"80px 24px",borderTop:`1px solid ${bdr}`,borderBottom:`1px solid ${bdr}`,background:dark?"rgba(255,255,255,0.01)":"rgba(0,0,0,0.015)",position:"relative",zIndex:2,transition:"background 0.5s,border-color 0.5s"}}>
           <div style={{maxWidth:1100,margin:"0 auto"}}>
-            <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:2,borderRadius:22,overflow:"hidden",border:`1px solid ${bdr}`,background:bdr,transition:"border-color 0.5s,background 0.5s"}}>
-              {[{v:10,s:"+",l:"Currencies and growing"},{v:100,s:"%",l:"Free, no credit card"},{v:5,s:" min",l:"To set up and log your first transaction"},{v:0,s:"",l:"Mental math required"}].map((s,i)=>(
-                <FadeIn key={i} delay={i*0.07}>
-                  <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8,padding:"48px 18px",background:dark?"rgba(255,255,255,0.014)":surface,textAlign:"center",transition:"background 0.5s"}}>
-                    <span style={{fontSize:"clamp(38px,4vw,52px)",fontWeight:700,letterSpacing:"-0.045em",color:fg,fontVariantNumeric:"tabular-nums",lineHeight:1,...T}}><Counter to={s.v} suffix={s.s}/></span>
-                    <span style={{fontSize:12,color:fgMuted,maxWidth:110,lineHeight:1.45,...T}}>{s.l}</span>
-                  </div>
+            <div style={{display:"flex",alignItems:"stretch",gap:24,flexWrap:"wrap"}}>
+              {[
+                {v:10,s:"+",l:"Currencies",sub:"and growing"},
+                {v:100,s:"%",l:"Free",sub:"no credit card, ever"},
+                {v:5,s:"",l:"Minutes",sub:"to set up and log your first transaction"},
+                {v:0,s:"",l:"Mental math",sub:"required — we handle all conversions"},
+              ].map((s,i)=>(
+                <FadeIn key={i} delay={i*0.06} className="stat-flex-item">
+                  <motion.div whileHover={{y:-3}} transition={{type:"spring",stiffness:260,damping:20}}
+                    style={{flex:"1 1 180px",padding:"32px 28px",background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:20,display:"flex",flexDirection:"column",gap:4,transition:"background 0.3s,border-color 0.5s",minWidth:160}}>
+                    <span style={{fontSize:"clamp(44px,4.5vw,64px)",fontWeight:700,letterSpacing:"-0.05em",color:fg,fontVariantNumeric:"tabular-nums",lineHeight:1,...T}}>
+                      <Counter to={s.v} suffix={s.s}/>
+                    </span>
+                    <span style={{fontSize:16,fontWeight:600,color:fg,letterSpacing:"-0.02em",...T}}>{s.l}</span>
+                    <span style={{fontSize:13,color:fgMuted,lineHeight:1.5,...T}}>{s.sub}</span>
+                  </motion.div>
                 </FadeIn>
               ))}
             </div>
@@ -1149,13 +1252,16 @@ export default function LandingPage() {
           <div style={{height:1,background:bdr,transition:"background 0.5s"}}/>
           <div className="foot-inner" style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"26px 52px"}}>
             <span style={{fontSize:14,fontWeight:600,letterSpacing:"-0.02em",color:fgSub,...T}}>Perceiva</span>
-            <span style={{display:"flex",alignItems:"center",gap:5,fontSize:13,color:fgSub,...T}}>
+            <a href="https://github.com/renzoreyn" target="_blank" rel="noopener noreferrer"
+              style={{display:"flex",alignItems:"center",gap:5,fontSize:13,color:fgSub,textDecoration:"none",transition:"opacity 0.2s"}}
+              onMouseEnter={e=>(e.currentTarget.style.opacity="0.7")}
+              onMouseLeave={e=>(e.currentTarget.style.opacity="1")}>
               made with
               <motion.span animate={{scale:[1,1.35,1]}} transition={{repeat:Infinity,duration:1.8,ease:[0.45,0,0.55,1]}} style={{display:"inline-flex",alignItems:"center"}}>
                 <Heart size={12} fill="#ff453a" color="#ff453a"/>
               </motion.span>
-              by ren
-            </span>
+              by @Renzoreyn
+            </a>
           </div>
         </footer>
 
