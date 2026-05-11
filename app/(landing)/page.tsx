@@ -479,7 +479,7 @@ function TiltCard3D({ dark }: { dark: boolean }) {
   );
 }
 
-            d={`M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`}
+            d={"M " + x1 + " " + y1 + " A " + r + " " + r + " 0 " + large + " 1 " + x2 + " " + y2}
             fill="none" stroke={seg.color} strokeWidth={stroke} strokeLinecap="round" />
         );
       })}
