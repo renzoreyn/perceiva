@@ -85,11 +85,26 @@ const ChartTooltip = RechartsPrimitive.Tooltip
 function ChartTooltipContent({
   active, payload, className, indicator = "dot", hideLabel = false, hideIndicator = false,
   label, labelFormatter, labelClassName, formatter, color, nameKey, labelKey,
-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
-  React.ComponentProps<"div"> & {
-    hideLabel?: boolean; hideIndicator?: boolean
+}: React.ComponentProps<"div"> & {
+    active?: boolean
+    payload?: Array<{
+      dataKey?: string | number
+      name?: string | number
+      value?: number | string
+      color?: string
+      fill?: string
+      payload?: Record<string, unknown>
+    }>
+    label?: string | number
+    labelFormatter?: (label: unknown, payload: unknown[]) => React.ReactNode
+    labelClassName?: string
+    formatter?: (value: unknown, name: unknown, item: unknown, index: number, payload: unknown) => React.ReactNode
+    color?: string
+    nameKey?: string
+    labelKey?: string
+    hideLabel?: boolean
+    hideIndicator?: boolean
     indicator?: "line" | "dot" | "dashed"
-    nameKey?: string; labelKey?: string
   }) {
   const { config } = useChart()
 
