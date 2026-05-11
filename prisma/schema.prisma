@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 enum Currency {
@@ -57,8 +56,8 @@ model Wallet {
   userId       String
   name         String
   baseCurrency Currency  @default(USD)
-  cardColor    String    @default("card-space") // gradient class name
-  cardStyle    String    @default("dark") // dark | light
+  cardColor    String    @default("card-space")
+  cardStyle    String    @default("dark")
   emoji        String?
   isDefault    Boolean   @default(false)
   createdAt    DateTime  @default(now())
@@ -93,16 +92,16 @@ model Transaction {
   walletId            String
   categoryId          String?
   type                TransactionType
-  amount              Float              // original amount
+  amount              Float
   currency            Currency
-  amountUsd           Float              // converted to USD at time of entry
-  exchangeRateAtEntry Float              // rate used
+  amountUsd           Float
+  exchangeRateAtEntry Float
   note                String?
   date                DateTime           @default(now())
   isRecurring         Boolean            @default(false)
   recurrenceInterval  RecurrenceInterval?
   recurrenceEndDate   DateTime?
-  parentId            String?            // for recurring children
+  parentId            String?
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
 
@@ -119,8 +118,8 @@ model Budget {
   id         String   @id @default(cuid())
   userId     String
   categoryId String
-  amount     Float    // in USD
-  period     String   @default("monthly") // monthly | weekly
+  amount     Float
+  period     String   @default("monthly")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -134,7 +133,7 @@ model Budget {
 model DashboardConfig {
   id      String @id @default(cuid())
   userId  String @unique
-  widgets Json   @default("[]") // array of { id, type, position, size, visible }
+  widgets Json   @default("[]")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -144,7 +143,7 @@ model DashboardConfig {
 model ExchangeRateCache {
   id        String   @id @default(cuid())
   base      Currency
-  rates     Json     // { USD: 1, EUR: 0.92, ... }
+  rates     Json
   fetchedAt DateTime @default(now())
 
   @@unique([base])
