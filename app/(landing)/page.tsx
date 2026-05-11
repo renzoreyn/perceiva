@@ -18,19 +18,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-// ─── Iridescent accent system ────────────────────────────────────────────────
-// An oil-slick / holographic gradient that shifts as it animates
-// On light: darker, more saturated iridescent
-// On dark:  brighter, more vivid iridescent
-const IR_GRADIENT_DARK  = "linear-gradient(90deg,#a78bfa,#38bdf8,#34d399,#a78bfa,#38bdf8)";
-const IR_GRADIENT_LIGHT = "linear-gradient(90deg,#7c3aed,#0369a1,#059669,#7c3aed,#0369a1)";
-// Single solid for buttons/borders (we pick a midpoint)
-const IR_SOLID_DARK  = "#5eead4"; // teal-ish center of dark gradient
-const IR_SOLID_LIGHT = "#0f766e"; // deep teal for light mode
-const IR_DIM_DARK    = "rgba(94,234,212,0.12)";
-const IR_DIM_LIGHT   = "rgba(15,118,110,0.09)";
-const IR_BDR_DARK    = "rgba(94,234,212,0.28)";
-const IR_BDR_LIGHT   = "rgba(15,118,110,0.22)";
+// ─── Blue accent system ──────────────────────────────────────────────────────
+// Dark mode: Apple blue #0A84FF (iOS system blue)
+// Light mode: #0060D4 (deeper, readable on white)
+const IR_GRADIENT_DARK  = "linear-gradient(90deg,#0A84FF,#40a9ff,#0A84FF)";
+const IR_GRADIENT_LIGHT = "linear-gradient(90deg,#0060D4,#0a84ff,#0060D4)";
+const IR_SOLID_DARK  = "#0A84FF";
+const IR_SOLID_LIGHT = "#0060D4";
+const IR_DIM_DARK    = "rgba(10,132,255,0.12)";
+const IR_DIM_LIGHT   = "rgba(0,96,212,0.09)";
+const IR_BDR_DARK    = "rgba(10,132,255,0.28)";
+const IR_BDR_LIGHT   = "rgba(0,96,212,0.22)";
 
 const SP  = { stiffness: 100, damping: 22, mass: 1.1 };
 const SPF = { stiffness: 200, damping: 22, mass: 0.85 };
@@ -39,7 +37,7 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 // ─── Global CSS ──────────────────────────────────────────────────────────────
 const GLOBAL_CSS = `
   @keyframes twBlink  { 0%,100%{opacity:1} 50%{opacity:0} }
-  @keyframes irShift  { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
+  @keyframes irShift  { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
   @keyframes shineSweep { 0%{transform:translateX(-120%)} 100%{transform:translateX(280%)} }
   @keyframes floatY   { 0%,100%{transform:translateY(0px) rotateX(0deg)} 50%{transform:translateY(-8px) rotateX(2deg)} }
   @keyframes cardGlow { 0%,100%{opacity:0.4} 50%{opacity:0.8} }
@@ -47,12 +45,8 @@ const GLOBAL_CSS = `
   html { scroll-behavior:smooth; }
   a { text-decoration:none; }
   .ir-text {
-    background: var(--ir-grad);
-    background-size: 300% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: irShift 4s linear infinite;
+    /* solid blue — no animation needed for monochrome accent */
+    color: var(--ir-solid);
   }
   .ir-text-static {
     background: var(--ir-grad);
@@ -94,6 +88,120 @@ const GLOBAL_CSS = `
     animation: cardGlow 3s ease-in-out infinite;
   }
   .hov-lift:hover { transform:translateY(-2px); }
+
+  /* ── Button overrides ── */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 14px;
+    padding: 13px 24px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: -0.01em;
+    transition: background 0.25s, box-shadow 0.25s, transform 0.15s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn-primary-dark {
+    background: #0A84FF;
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(10,132,255,0.25), 0 4px 12px rgba(10,132,255,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .btn-primary-dark:hover {
+    background: #1a8fff;
+    box-shadow: 0 2px 8px rgba(10,132,255,0.35), 0 8px 24px rgba(10,132,255,0.25), inset 0 1px 0 rgba(255,255,255,0.18);
+    transform: translateY(-1px);
+  }
+  .btn-primary-dark:active { transform: scale(0.97); }
+
+  .btn-primary-light {
+    background: #0060D4;
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0,96,212,0.2), 0 4px 12px rgba(0,96,212,0.15), inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+  .btn-primary-light:hover {
+    background: #0068e8;
+    box-shadow: 0 2px 8px rgba(0,96,212,0.3), 0 8px 24px rgba(0,96,212,0.2), inset 0 1px 0 rgba(255,255,255,0.2);
+    transform: translateY(-1px);
+  }
+  .btn-primary-light:active { transform: scale(0.97); }
+
+  .btn-ghost-dark {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 14px;
+    padding: 12px 20px;
+    cursor: pointer;
+    letter-spacing: -0.01em;
+    color: rgba(236,236,236,0.75);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn-ghost-dark:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.18);
+    color: rgba(236,236,236,1);
+    transform: translateY(-1px);
+  }
+  .btn-ghost-dark:active { transform: scale(0.97); }
+
+  .btn-ghost-light {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 14px;
+    padding: 12px 20px;
+    cursor: pointer;
+    letter-spacing: -0.01em;
+    color: rgba(17,17,17,0.72);
+    background: rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.1);
+    transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn-ghost-light:hover {
+    background: rgba(0,0,0,0.07);
+    border-color: rgba(0,0,0,0.16);
+    color: rgba(17,17,17,1);
+    transform: translateY(-1px);
+  }
+  .btn-ghost-light:active { transform: scale(0.97); }
+
+  .btn-lg { font-size: 17px !important; padding: 15px 30px !important; border-radius: 16px !important; }
+
+  .nav-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: -0.01em;
+    transition: background 0.25s, box-shadow 0.2s, transform 0.15s;
+    text-decoration: none;
+    white-space: nowrap;
+    color: #fff;
+  }
+  .nav-btn-primary-dark { background: #0A84FF; box-shadow: 0 1px 4px rgba(10,132,255,0.3); }
+  .nav-btn-primary-dark:hover { background: #1a8fff; box-shadow: 0 2px 8px rgba(10,132,255,0.4); transform: translateY(-1px); }
+  .nav-btn-primary-light { background: #0060D4; box-shadow: 0 1px 4px rgba(0,96,212,0.25); }
+  .nav-btn-primary-light:hover { background: #0068e8; box-shadow: 0 2px 8px rgba(0,96,212,0.35); transform: translateY(-1px); }
+
   @media (max-width:1024px) {
     .perc-grid { grid-template-columns:repeat(3,1fr) !important; }
     .perc-anc  { grid-column:span 3 !important; flex-direction:row !important; align-items:center !important; gap:16px !important; padding:22px 24px !important; }
@@ -496,8 +604,8 @@ export default function LandingPage() {
   return (
     <TooltipProvider delayDuration={150}>
       <style>{GLOBAL_CSS}</style>
-      {/* CSS variable for iridescent gradient — inherited by .ir-text */}
-      <style>{`:root { --ir-grad: ${irGrad}; }`}</style>
+      {/* CSS variables for blue accent */}
+      <style>{`:root { --ir-grad: ${irGrad}; --ir-solid: ${irSolid}; }`}</style>
 
       <div ref={rootRef} style={{ minHeight:"100vh", background:bg, color:fg, fontFamily:"-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif", overflowX:"hidden", position:"relative", transition:"background 0.5s,color 0.5s" }}>
         <Noise />
@@ -519,13 +627,11 @@ export default function LandingPage() {
               <Switch checked={dark} onCheckedChange={setDark} style={{transform:"scale(0.8)"}}/>
               <Moon size={13} style={{color:dark?irSolid:fgSub,transition:"color 0.5s"}}/>
             </motion.div>
-            <Link href="/login" className="desk-si">
-              <Button variant="ghost" size="sm" style={{fontSize:13,color:fg,fontWeight:500,opacity:0.72,...T}}>Sign in</Button>
+            <Link href="/login" className="desk-si" style={{fontSize:13,fontWeight:500,color:fg,opacity:0.72,padding:"8px 12px",borderRadius:10,textDecoration:"none",transition:"opacity 0.2s,color 0.5s"}}>
+              Sign in
             </Link>
-            <Link href="/signup">
-              <Button size="sm" style={{fontSize:13,borderRadius:980,background:irSolid,color:"#fff",border:"none",display:"inline-flex",alignItems:"center",gap:6,transition:"background 0.5s,filter 0.2s"}}>
-                Get started <ArrowRight size={13}/>
-              </Button>
+            <Link href="/signup" className={`nav-btn-primary ${dark?"nav-btn-primary-dark":"nav-btn-primary-light"}`}>
+              Get started <ArrowRight size={13}/>
             </Link>
             <button className="mob-icon" onClick={()=>setMenu(true)} style={{display:"none",background:"none",border:"none",color:fg,cursor:"pointer",padding:7,borderRadius:8,opacity:0.75,...T}}>
               <Menu size={20}/>
@@ -546,7 +652,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:12,marginTop:28}}>
-                <Link href="/signup" onClick={()=>setMenu(false)}><Button size="lg" className="w-full" style={{background:irSolid,color:"#fff",border:"none",transition:"background 0.5s"}}>Get started <ArrowRight size={15}/></Button></Link>
+                <Link href="/signup" onClick={()=>setMenu(false)} className={`btn-primary btn-lg ${dark?"btn-primary-dark":"btn-primary-light"}`} style={{justifyContent:"center",width:"100%"}}>Get started <ArrowRight size={15}/></Link>
               </div>
             </motion.div>
           )}
@@ -583,12 +689,12 @@ export default function LandingPage() {
             <motion.div initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{delay:0.62,duration:0.6,ease:EASE}}
               style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap",justifyContent:"center",marginTop:6}}>
               <Magnetic>
-                <Link href="/signup" style={{display:"inline-flex",alignItems:"center",gap:8,background:irSolid,color:"#fff",fontSize:15,fontWeight:500,borderRadius:980,padding:"13px 26px",transition:"background 0.5s,filter 0.2s"}}>
+                <Link href="/signup" className={`btn-primary ${dark?"btn-primary-dark":"btn-primary-light"}`}>
                   Start for free <ArrowRight size={15}/>
                 </Link>
               </Magnetic>
               <Magnetic>
-                <button onClick={()=>setDemoOpen(true)} style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:15,fontWeight:500,color:fgMuted,background:"none",border:`1px solid ${bdr}`,borderRadius:980,padding:"12px 20px",cursor:"pointer",transition:"color 0.3s,border-color 0.4s"}}>
+                <button onClick={()=>setDemoOpen(true)} className={dark?"btn-ghost-dark":"btn-ghost-light"}>
                   <Sparkles size={14}/> See how it works
                 </button>
               </Magnetic>
@@ -993,7 +1099,7 @@ export default function LandingPage() {
             <FadeUp delay={0.1}><p style={{fontSize:17,color:fgMuted,maxWidth:360,lineHeight:1.65,margin:0,...T}}>Takes five minutes. Saves you from a lot of "wait, how much is that actually?"</p></FadeUp>
             <FadeUp delay={0.2}>
               <Magnetic>
-                <Link href="/signup" style={{display:"inline-flex",alignItems:"center",gap:8,background:irSolid,color:"#fff",fontSize:17,fontWeight:500,borderRadius:980,padding:"16px 34px",transition:"background 0.5s,filter 0.2s"}}>
+                <Link href="/signup" className={`btn-primary btn-lg ${dark?"btn-primary-dark":"btn-primary-light"}`}>
                   Create your account <ArrowRight size={17}/>
                 </Link>
               </Magnetic>
@@ -1042,8 +1148,8 @@ export default function LandingPage() {
               ))}
             </div>
             <div style={{marginTop:8}}>
-              <Link href="/signup" onClick={()=>setDemoOpen(false)}>
-                <Button className="w-full" style={{background:irSolid,color:"#fff",border:"none",borderRadius:12,transition:"background 0.5s"}}>Get started now <ArrowRight size={15}/></Button>
+              <Link href="/signup" onClick={()=>setDemoOpen(false)} className={`btn-primary ${dark?"btn-primary-dark":"btn-primary-light"}`} style={{width:"100%",justifyContent:"center",borderRadius:12}}>
+                Get started now <ArrowRight size={15}/>
               </Link>
             </div>
           </DialogContent>
