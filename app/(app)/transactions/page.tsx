@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 interface Category { id: string; name: string; icon: string; color: string; type: string }
 interface Wallet { id: string; name: string; baseCurrency: string; cardColor: string }
 
-const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } };
+const container = { hidden: { opacity: 0 }, show: { opacity: 1 } };
 const item = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } };
 
 export default function TransactionsPage() {

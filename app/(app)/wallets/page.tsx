@@ -13,8 +13,8 @@ import { CURRENCIES, CARD_THEMES } from "@/types";
 import type { WalletWithStats, Currency, CardThemeId } from "@/types";
 import { cn } from "@/lib/utils";
 
-const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } };
-const item = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } } };
+const container = { hidden: { opacity: 0 }, show: { opacity: 1 } };
+const item = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
 
 export default function WalletsPage() {
   const [wallets, setWallets] = useState<WalletWithStats[]>([]);
