@@ -479,10 +479,58 @@ function TiltCard3D({ dark }: { dark: boolean }) {
   );
 }
 
-            d={"M " + x1 + " " + y1 + " A " + r + " " + r + " 0 " + large + " 1 " + x2 + " " + y2}
-            fill="none" stroke={seg.color} strokeWidth={stroke} strokeLinecap="round" />
-        );
-      })}
+// ─── Mini graph components ────────────────────────────────────────────────────
+function MiniSparkline({ data, color, height = 48 }: { data: number[]; color: string; height?: number }) {
+  const max = Math.max(...data), min = Math.min(...data);
+  const range = max - min || 1;
+  const w = 200, h = height;
+  const pts = data.map((v, i) => (i / (data.length - 1)) * w + "," + (h - ((v - min) / range) * (h - 4) - 2)).join(" ");
+  const firstPt = pts.split(" ")[0];
+  const lastIdx = data.length - 1;
+  const lastX = (lastIdx / (data.length - 1)) * w;
+  const area = "M0," + h + " L" + pts.split(" ").join(" L") + " L" + lastX + "," + h + " Z";
+  const gradId = "sg-" + color.replace("#", "");
+  return (
+    <svg width="100%" viewBox={"0 0 " + w + " " + h} preserveAspectRatio="none" style={{ display: "block" }}>
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <path d={area} fill={"url(#" + gradId + ")"} />
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DonutChart({ segments, size = 96 }: { segments: { v: number; color: string; label: string }[]; size?: number }) {
+  const total = segments.reduce((s, x) => s + x.v, 0);
+  const r = 36;
+  const cx = size / 2;
+  const cy = size / 2;
+  const stroke = 12;
+  let cumAngle = -90;
+
+  const arcs = segments.map((seg) => {
+    const angle = (seg.v / total) * 360;
+    const sa = cumAngle;
+    cumAngle += angle;
+    const rad = (a: number) => (a * Math.PI) / 180;
+    const ax1 = cx + r * Math.cos(rad(sa));
+    const ay1 = cy + r * Math.sin(rad(sa));
+    const ax2 = cx + r * Math.cos(rad(sa + angle - 1));
+    const ay2 = cy + r * Math.sin(rad(sa + angle - 1));
+    const lg = angle > 180 ? 1 : 0;
+    const p = "M " + ax1.toFixed(2) + " " + ay1.toFixed(2) + " A " + r + " " + r + " 0 " + lg + " 1 " + ax2.toFixed(2) + " " + ay2.toFixed(2);
+    return { p, color: seg.color };
+  });
+
+  return (
+    <svg width={size} height={size}>
+      {arcs.map((arc, i) => (
+        <path key={i} d={arc.p} fill="none" stroke={arc.color} strokeWidth={stroke} strokeLinecap="round" />
+      ))}
       <circle cx={cx} cy={cy} r={r - stroke / 2 - 2} fill="none" stroke="rgba(128,128,128,0.08)" strokeWidth="1" />
     </svg>
   );
