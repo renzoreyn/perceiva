@@ -17,6 +17,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  PieChart, Pie, Cell, ResponsiveContainer,
+} from "recharts";
+import {
+  ChartContainer, ChartTooltip, ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 
 // ─── Blue accent system ──────────────────────────────────────────────────────
 // Dark mode: Apple blue #0A84FF (iOS system blue)
@@ -471,45 +479,6 @@ function TiltCard3D({ dark }: { dark: boolean }) {
   );
 }
 
-// ─── Mini graph components ────────────────────────────────────────────────────
-function MiniSparkline({ data, color, height = 48 }: { data: number[]; color: string; height?: number }) {
-  const max = Math.max(...data), min = Math.min(...data);
-  const range = max - min || 1;
-  const w = 200, h = height;
-  const pts = data.map((v, i) => `${(i / (data.length - 1)) * w},${h - ((v - min) / range) * (h - 4) - 2}`).join(" ");
-  const area = `M0,${h} L${pts.split(" ").map((p, i) => i === 0 ? `${p}` : p).join(" L")} L${w},${h} Z`;
-  return (
-    <svg width="100%" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ display: "block" }}>
-      <defs>
-        <linearGradient id={`sg-${color.slice(1)}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#sg-${color.slice(1)})`} />
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function DonutChart({ segments, size = 96 }: { segments: { v: number; color: string; label: string }[]; size?: number }) {
-  const total = segments.reduce((s, x) => s + x.v, 0);
-  let cumAngle = -90;
-  const r = 36, cx = size / 2, cy = size / 2, stroke = 12;
-  return (
-    <svg width={size} height={size}>
-      {segments.map((seg, i) => {
-        const angle = (seg.v / total) * 360;
-        const startAngle = cumAngle;
-        cumAngle += angle;
-        const rad = (a: number) => (a * Math.PI) / 180;
-        const x1 = cx + r * Math.cos(rad(startAngle));
-        const y1 = cy + r * Math.sin(rad(startAngle));
-        const x2 = cx + r * Math.cos(rad(startAngle + angle - 1));
-        const y2 = cy + r * Math.sin(rad(startAngle + angle - 1));
-        const large = angle > 180 ? 1 : 0;
-        return (
-          <path key={i}
             d={`M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`}
             fill="none" stroke={seg.color} strokeWidth={stroke} strokeLinecap="round" />
         );
@@ -521,35 +490,35 @@ function DonutChart({ segments, size = 96 }: { segments: { v: number; color: str
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const TICKER = [
-  "1 USD = \u058F390 AMD","1 USD = Rp 17,417 IDR","1 EUR = $1.09 USD",
-  "1 GBP = $1.27 USD","1 USD = Fr 0.88 CHF","1 USD = \u00A57.26 CNY",
-  "1 AMD = Rp 44.7 IDR","1 CHF = $1.14 USD","1 USD = \u20BD91.2 RUB",
-  "1 USD = \u20B158.4 PHP","1 USD = S$1.35 SGD","1 EUR = \u058F425 AMD",
-  "1 SGD = Rp 12,886 IDR","1 PHP = Rp 298 IDR",
+  "1 USD = £0.79 GBP","1 GBP = $1.27 USD","1 EUR = $1.09 USD",
+  "1 USD = Rp 17,417 IDR","1 USD = Fr 0.88 CHF","1 USD = ¥7.26 CNY",
+  "1 USD = S$1.35 SGD","1 USD = ₱58.4 PHP","1 SGD = Rp 12,886 IDR",
+  "1 EUR = £0.84 GBP","1 GBP = €1.19 EUR","1 CHF = $1.14 USD",
+  "1 USD = ₽91.2 RUB","1 USD = ֏390 AMD","1 EUR = ¥8.65 CNY",
 ];
 
 const PERCEPTION = [
-  { code:"AMD",sym:"\u058F",amount:"390",    label:"Armenian Dram",    note:"pocket change vibes" },
-  { code:"IDR",sym:"Rp",   amount:"17,417",  label:"Indonesian Rupiah",note:"17k feels cheap" },
+  { code:"GBP",sym:"\u00A3",amount:"0.79",   label:"British Pound",    note:"worth more than $1" },
+  { code:"EUR",sym:"\u20AC",amount:"0.92",   label:"Euro",             note:"almost a dollar" },
+  { code:"IDR",sym:"Rp",    amount:"17,417",  label:"Indonesian Rupiah",note:"17k feels like nothing" },
   { code:"PHP",sym:"\u20B1",amount:"58.4",   label:"Philippine Peso",  note:"" },
-  { code:"SGD",sym:"S$",   amount:"1.35",    label:"Singapore Dollar", note:"close to $1" },
-  { code:"GBP",sym:"\u00A3",amount:"0.79",   label:"British Pound",    note:"worth more" },
+  { code:"SGD",sym:"S$",    amount:"1.35",    label:"Singapore Dollar", note:"close to $1" },
 ];
 
 const FEATURES = [
-  { icon:Globe,          title:"10 currencies",          body:"USD, GBP, EUR, CHF, CNY, IDR, AMD, RUB, PHP, SGD. Log in any. More coming." },
+  { icon:Globe,          title:"10 currencies",          body:"USD, GBP, EUR, CHF, CNY, IDR, AMD, RUB, PHP, SGD — and more on the way. Log in any of them." },
   { icon:RefreshCw,      title:"Live rates",             body:"Converts the moment you log. Frankfurter API. No key, always fresh." },
-  { icon:Layers,         title:"Multiple wallets",       body:"AMD salary. USD freelance. IDR spending. Separate streams, one view." },
+  { icon:Layers,         title:"Multiple wallets",       body:"GBP salary. EUR freelance. SGD savings. Separate streams, one unified view." },
   { icon:BarChart2,      title:"Budget tracking",        body:"Monthly limits per category. Turns red before your bank does." },
   { icon:ArrowLeftRight, title:"Recurring transactions", body:"Salary, rent, subs. Set once. Logs itself every cycle." },
   { icon:ShieldCheck,    title:"Your data only",         body:"Email or Google. Your numbers live in your account. Nowhere else." },
 ];
 
 const FLOATS = [
-  { from:"4,700 AMD",  to:"$12.05",  d:0.65 },
-  { from:"Rp 207,000", to:"$11.89",  d:0.78 },
-  { from:"\u20B1580 PHP",    to:"$9.93",   d:0.91 },
-  { from:"S$50 SGD",   to:"$37.04",  d:1.04 },
+  { from:"£500 GBP",   to:"$635",    d:0.65 },
+  { from:"€200 EUR",   to:"$218",    d:0.78 },
+  { from:"S$300 SGD",  to:"$222",    d:0.91 },
+  { from:"Rp 500k IDR",to:"$28.70",  d:1.04 },
 ];
 
 // Mock graph data
@@ -682,8 +651,8 @@ export default function LandingPage() {
 
             <motion.p initial={{opacity:0,y:18,filter:"blur(4px)"}} animate={{opacity:1,y:0,filter:"blur(0px)"}} transition={{delay:0.50,duration:0.7,ease:EASE}}
               style={{fontSize:"clamp(15px,1.9vw,18px)",lineHeight:1.72,color:fgMuted,maxWidth:500,margin:0,...T}}>
-              Your AMD salary hits different when you realize what it actually is in IDR.
-              Perceiva converts everything, live — so you always know what you are working with.
+              You earn in one currency, spend in another, and send money in a third.
+              Perceiva converts everything in real time — so you always know exactly what you have.
             </motion.p>
 
             <motion.div initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} transition={{delay:0.62,duration:0.6,ease:EASE}}
@@ -797,49 +766,59 @@ export default function LandingPage() {
             {/* dashboard preview cards */}
             <div className="graph-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18}}>
 
-              {/* income vs expense chart */}
+              {/* income vs expense — shadcn BarChart */}
               <FadeUp delay={0.08}>
-                <div style={{background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:22,padding:"28px 28px 20px",overflow:"hidden",transition:"background 0.3s,border-color 0.5s"}}>
+                <div style={{background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:22,padding:"28px 28px 16px",overflow:"hidden",transition:"background 0.3s,border-color 0.5s"}}>
                   <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
                     <div>
                       <p style={{fontSize:12,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase",color:fgSub,margin:"0 0 4px",...T}}>Income vs Expenses</p>
                       <p style={{fontSize:22,fontWeight:700,letterSpacing:"-0.03em",color:fg,margin:0,...T}}>$4,271 <span style={{fontSize:13,color:"#10b981",fontWeight:500}}>+18%</span></p>
                     </div>
-                    <div style={{display:"flex",gap:16,fontSize:11}}>
+                    <div style={{display:"flex",gap:14,fontSize:11}}>
                       <span style={{display:"flex",alignItems:"center",gap:5,color:fgSub,...T}}><span style={{width:8,height:8,borderRadius:2,background:"#10b981",display:"inline-block"}}/>Income</span>
                       <span style={{display:"flex",alignItems:"center",gap:5,color:fgSub,...T}}><span style={{width:8,height:8,borderRadius:2,background:"#f43f5e",display:"inline-block"}}/>Expenses</span>
                     </div>
                   </div>
-                  {/* bar chart */}
-                  <div style={{display:"flex",gap:3,alignItems:"flex-end",height:80}}>
-                    {INCOME_DATA.map((v,i)=>{
-                      const maxV = Math.max(...INCOME_DATA,...EXPENSE_DATA);
-                      const ih = (v/maxV)*76; const eh = (EXPENSE_DATA[i]/maxV)*76;
-                      return(
-                        <div key={i} style={{flex:1,display:"flex",gap:1,alignItems:"flex-end",justifyContent:"center"}}>
-                          <motion.div initial={{height:0}} whileInView={{height:ih}} viewport={{once:true}} transition={{delay:i*0.05,duration:0.5,ease:EASE}}
-                            style={{width:"45%",background:"#10b981",borderRadius:"3px 3px 0 0",opacity:0.85}}/>
-                          <motion.div initial={{height:0}} whileInView={{height:eh}} viewport={{once:true}} transition={{delay:i*0.05+0.1,duration:0.5,ease:EASE}}
-                            style={{width:"45%",background:"#f43f5e",borderRadius:"3px 3px 0 0",opacity:0.75}}/>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
-                    {["J","F","M","A","M","J","J","A","S","O","N","D"].map((m,i)=>(
-                      <span key={i} style={{fontSize:9,color:fgSub,fontFamily:'"SF Mono",ui-monospace,monospace',...T}}>{m}</span>
-                    ))}
-                  </div>
+                  <ChartContainer
+                    config={{
+                      income:  { label:"Income",   color:"#10b981" },
+                      expense: { label:"Expenses",  color:"#f43f5e" },
+                    } satisfies ChartConfig}
+                    className="h-[120px] w-full"
+                  >
+                    <BarChart data={INCOME_DATA.map((v,i)=>({ month:["J","F","M","A","M","J","J","A","S","O","N","D"][i], income:v, expense:EXPENSE_DATA[i] }))} barGap={2}>
+                      <XAxis dataKey="month" tick={{fontSize:9,fill:dark?"rgba(236,236,236,0.35)":"rgba(17,17,17,0.4)"}} axisLine={false} tickLine={false}/>
+                      <ChartTooltip content={<ChartTooltipContent/>}/>
+                      <Bar dataKey="income"  fill="#10b981" radius={[3,3,0,0]} maxBarSize={16}/>
+                      <Bar dataKey="expense" fill="#f43f5e" radius={[3,3,0,0]} maxBarSize={16}/>
+                    </BarChart>
+                  </ChartContainer>
                 </div>
               </FadeUp>
 
-              {/* spending by category + net worth */}
+                            {/* spending by category + net worth */}
               <div style={{display:"flex",flexDirection:"column",gap:18}}>
-                <FadeUp delay={0.14}>
+                                <FadeUp delay={0.14}>
                   <div style={{background:dark?"rgba(255,255,255,0.025)":surface,border:`1px solid ${bdr}`,borderRadius:22,padding:"24px 28px",transition:"background 0.3s,border-color 0.5s"}}>
                     <p style={{fontSize:12,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase",color:fgSub,margin:"0 0 16px",...T}}>Spending by Category</p>
-                    <div style={{display:"flex",gap:20,alignItems:"center"}}>
-                      <DonutChart segments={CATEGORIES} size={96}/>
+                    <div style={{display:"flex",gap:16,alignItems:"center"}}>
+                      <ChartContainer
+                        config={{
+                          food:   {label:"Food",    color:"#f59e0b"},
+                          rent:   {label:"Rent",    color:"#3b82f6"},
+                          subs:   {label:"Subs",    color:"#8b5cf6"},
+                          travel: {label:"Travel",  color:"#10b981"},
+                          other:  {label:"Other",   color:"#6b7280"},
+                        } satisfies ChartConfig}
+                        className="h-[96px] w-[96px] shrink-0"
+                      >
+                        <PieChart>
+                          <Pie data={CATEGORIES} dataKey="v" cx="50%" cy="50%" innerRadius={28} outerRadius={42} strokeWidth={0} paddingAngle={2}>
+                            {CATEGORIES.map((c,i)=><Cell key={i} fill={c.color}/>)}
+                          </Pie>
+                          <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="label"/>}/>
+                        </PieChart>
+                      </ChartContainer>
                       <div style={{display:"flex",flexDirection:"column",gap:7,flex:1}}>
                         {CATEGORIES.map((c,i)=>(
                           <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -867,9 +846,21 @@ export default function LandingPage() {
                         <TrendingUp size={16} style={{color:irSolid,transition:"color 0.5s"}}/>
                       </div>
                     </div>
-                    <div style={{position:"relative",overflow:"hidden"}}>
-                      <MiniSparkline data={[4200,5100,4800,6200,5900,7400,6800,8100,7600,8540]} color={irSolid} height={52}/>
-                    </div>
+                    <ChartContainer
+                      config={{ worth: { label:"Net Worth", color:irSolid } } satisfies ChartConfig}
+                      className="h-[52px] w-full"
+                    >
+                      <AreaChart data={[4200,5100,4800,6200,5900,7400,6800,8100,7600,8540].map((v,i)=>({i,v}))}>
+                        <defs>
+                          <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={irSolid} stopOpacity={0.2}/>
+                            <stop offset="100%" stopColor={irSolid} stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <Area type="monotone" dataKey="v" stroke={irSolid} strokeWidth={2} fill="url(#sparkGrad)" dot={false}/>
+                        <ChartTooltip content={<ChartTooltipContent hideLabel/>}/>
+                      </AreaChart>
+                    </ChartContainer>
                   </div>
                 </FadeUp>
               </div>
@@ -881,13 +872,13 @@ export default function LandingPage() {
                     <p style={{fontSize:12,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase",color:fgSub,margin:0,...T}}>Perception Check</p>
                     <Badge style={{fontSize:10,background:irDim,color:irSolid,border:`1px solid ${irBdr}`,borderRadius:980,padding:"2px 8px",transition:"all 0.5s"}}>Live</Badge>
                   </div>
-                  <p style={{fontSize:12,color:fgMuted,margin:"0 0 14px",...T}}>What 4,700 AMD actually is:</p>
+                  <p style={{fontSize:12,color:fgMuted,margin:"0 0 14px",...T}}>What £100 GBP actually is:</p>
                   <div style={{display:"flex",flexDirection:"column",gap:8}}>
                     {[
-                      {code:"USD",sym:"$",   v:"$12.05",  bar:12,  max:100},
-                      {code:"IDR",sym:"Rp",  v:"Rp 209,708",bar:100,max:100},
-                      {code:"PHP",sym:"\u20B1",v:"\u20B1703", bar:42,  max:100},
-                      {code:"SGD",sym:"S$",  v:"S$16.25", bar:16,  max:100},
+                      {code:"USD",sym:"$",   v:"$127.00",  bar:100,  max:100},
+                      {code:"IDR",sym:"Rp",  v:"Rp 2,211,959",bar:95,max:100},
+                      {code:"PHP",sym:"\u20B1",v:"\u20B17,410", bar:60,  max:100},
+                      {code:"SGD",sym:"S$",  v:"S$171.45", bar:72,  max:100},
                     ].map((row,i)=>(
                       <div key={i}>
                         <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
@@ -911,10 +902,10 @@ export default function LandingPage() {
                   <p style={{fontSize:12,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase",color:fgSub,margin:"0 0 16px",...T}}>Recent Transactions</p>
                   <div style={{display:"flex",flexDirection:"column",gap:0}}>
                     {[
-                      {label:"AMD Salary",     sub:"Main wallet · recurring",  amt:"+$812",  cur:"֏315,000 AMD",pos:true},
-                      {label:"Lunch Yerevan",  sub:"Food · today",              amt:"-$12.05", cur:"֏4,700 AMD",  pos:false},
+                      {label:"GBP Freelance",  sub:"UK client · recurring",    amt:"+$812",  cur:"£640 GBP",    pos:true},
+                      {label:"Lunch London",   sub:"Food · today",              amt:"-$14.20", cur:"£11.20 GBP",  pos:false},
                       {label:"Grab Jakarta",   sub:"Transport · yesterday",     amt:"-$4.32",  cur:"Rp 75,200",   pos:false},
-                      {label:"Freelance GBP",  sub:"USD wallet · 2 days ago",   amt:"+$101.60",cur:"\u00A380 GBP",    pos:true},
+                      {label:"EUR Invoice",    sub:"EU client · 2 days ago",    amt:"+$218.00",cur:"€200 EUR",     pos:true},
                     ].map((tx,i)=>(
                       <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:i<3?`1px solid ${bdr}`:"none",transition:"border-color 0.5s"}}>
                         <div style={{width:34,height:34,borderRadius:12,background:tx.pos?"rgba(16,185,129,0.12)":"rgba(244,63,94,0.1)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
@@ -945,7 +936,7 @@ export default function LandingPage() {
             <FadeUp>
               <p style={{fontSize:11.5,fontWeight:600,letterSpacing:"0.1em",textTransform:"uppercase",color:irSolid,marginBottom:14,transition:"color 0.5s"}}>Why it exists</p>
               <h2 style={{fontSize:"clamp(28px,5vw,60px)",fontWeight:700,letterSpacing:"-0.038em",lineHeight:1.06,color:fg,marginBottom:18,...T}}>$1 hits different<br/>everywhere you go.</h2>
-              <p style={{fontSize:17,lineHeight:1.72,color:fgMuted,maxWidth:460,marginBottom:48,...T}}>Numbers lie. 4,700 AMD sounds cheap until you do the math. Perceiva does it for you — instantly, every time.</p>
+              <p style={{fontSize:17,lineHeight:1.72,color:fgMuted,maxWidth:460,marginBottom:48,...T}}>Numbers lie. £80 sounds expensive until you realize it is the same as a casual lunch in some cities. Perceiva shows you what every number actually means — instantly, every time.</p>
             </FadeUp>
             <div className="perc-grid" style={{display:"grid",gridTemplateColumns:"160px repeat(5,1fr)",gap:2,borderRadius:22,overflow:"hidden",border:`1px solid ${bdr}`,background:bdr,transition:"border-color 0.5s,background 0.5s"}}>
               <FadeUp delay={0.05}>
@@ -974,7 +965,7 @@ export default function LandingPage() {
                 </FadeUp>
               ))}
             </div>
-            <FadeUp delay={0.3}><p style={{marginTop:12,fontSize:11.5,color:fgSub,...T}}>Rates via Frankfurter API. Reference: xe.com (May 2026).</p></FadeUp>
+            <FadeUp delay={0.3}><p style={{marginTop:12,fontSize:11.5,color:fgSub,...T}}>Rates via OpenExchangeRates API. Updated every 5 minutes.</p></FadeUp>
           </div>
         </section>
 
@@ -1019,9 +1010,9 @@ export default function LandingPage() {
             </FadeUp>
             <div className="who-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:18}}>
               {[
-                {n:"01",title:"The expat juggling three currencies", body:"Company pays USD. Landlord wants AMD. Family needs IDR. Perceiva holds all of it without losing the thread."},
-                {n:"02",title:"The freelancer with global clients",  body:"GBP from London, EUR from Berlin, USD from New York. Everything converts at the moment it lands."},
-                {n:"03",title:"The traveler who stops tracking",     body:"12,000 AMD on lunch feels fine until you see it is Rp 207,000. Perceiva makes that visible before it becomes a habit."},
+                {n:"01",title:"The expat splitting across currencies", body:"Salary in USD. Rent in local currency. Family back home in another. Perceiva holds all of it in one place without losing the thread."},
+                {n:"02",title:"The freelancer with global clients",  body:"GBP from London, EUR from Berlin, USD from New York. Every payment converts the moment it lands — no spreadsheet needed."},
+                {n:"03",title:"The traveler who stops tracking",     body:"50,000 IDR on lunch feels like nothing until you convert it. Perceiva makes every number visible before it becomes a habit."},
               ].map((w,i)=>(
                 <FadeUp key={i} delay={i*0.09}>
                   <motion.div whileHover={{y:-7}} transition={{type:"spring",...SPF}}
@@ -1059,11 +1050,7 @@ export default function LandingPage() {
                   </CardHeader>
                   <CardContent style={{paddingTop:4}}>
                     <p style={{fontSize:15,lineHeight:1.8,color:fgMuted,margin:0,...T}}>
-                      I built Perceiva because I was living in Armenia, getting paid in both AMD and USD,
-                      and sending money back in IDR. Every time I spent 4,700 AMD on something I thought
-                      it was nothing. Then I checked the IDR equivalent and realized I was just not perceiving
-                      what I was actually spending. No app I tried handled multiple currencies in a way that
-                      actually made sense. So I made one. This is it.
+                      I built Perceiva because I was splitting my life across multiple currencies — getting paid in USD and AMD, sending money back in IDR. Every time I spent 4,700 AMD on something it felt like nothing. Then I checked what it was worth in IDR and realized I had completely lost track. No app handled this well. So I built one that does.
                     </p>
                     <div style={{marginTop:16,display:"flex",alignItems:"center",gap:8}}>
                       <div style={{width:28,height:2,background:irSolid,borderRadius:9999,transition:"background 0.5s"}}/>
@@ -1080,7 +1067,7 @@ export default function LandingPage() {
         <div style={{padding:"68px 24px",borderTop:`1px solid ${bdr}`,borderBottom:`1px solid ${bdr}`,background:dark?"rgba(255,255,255,0.01)":"rgba(0,0,0,0.015)",position:"relative",zIndex:2,transition:"background 0.5s,border-color 0.5s"}}>
           <div style={{maxWidth:1100,margin:"0 auto"}}>
             <div className="stat-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:2,borderRadius:22,overflow:"hidden",border:`1px solid ${bdr}`,background:bdr,transition:"border-color 0.5s,background 0.5s"}}>
-              {[{v:10,s:"+",l:"Currencies supported"},{v:100,s:"%",l:"Free, no credit card"},{v:5,s:" min",l:"To set up and log your first transaction"},{v:0,s:"",l:"Mental math required"}].map((s,i)=>(
+              {[{v:10,s:"+",l:"Currencies and growing"},{v:100,s:"%",l:"Free, no credit card"},{v:5,s:" min",l:"To set up and log your first transaction"},{v:0,s:"",l:"Mental math required"}].map((s,i)=>(
                 <FadeIn key={i} delay={i*0.07}>
                   <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8,padding:"48px 18px",background:dark?"rgba(255,255,255,0.014)":surface,textAlign:"center",transition:"background 0.5s"}}>
                     <span style={{fontSize:"clamp(38px,4vw,52px)",fontWeight:700,letterSpacing:"-0.045em",color:fg,fontVariantNumeric:"tabular-nums",lineHeight:1,...T}}><Counter to={s.v} suffix={s.s}/></span>
@@ -1096,7 +1083,7 @@ export default function LandingPage() {
         <section className="cta-sec" style={{padding:"130px 24px 110px",textAlign:"center",position:"relative",overflow:"hidden",zIndex:2}}>
           <div style={{maxWidth:1100,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center",gap:22,position:"relative",zIndex:2}}>
             <FadeUp><h2 style={{fontSize:"clamp(34px,7vw,80px)",fontWeight:700,letterSpacing:"-0.045em",lineHeight:1.02,color:fg,margin:0,...T}}>Stop guessing.<br/>Start perceiving.</h2></FadeUp>
-            <FadeUp delay={0.1}><p style={{fontSize:17,color:fgMuted,maxWidth:360,lineHeight:1.65,margin:0,...T}}>Takes five minutes. Saves you from a lot of "wait, how much is that actually?"</p></FadeUp>
+            <FadeUp delay={0.1}><p style={{fontSize:17,color:fgMuted,maxWidth:360,lineHeight:1.65,margin:0,...T}}>Five minutes to set up. No more mental math. No more currency confusion.</p></FadeUp>
             <FadeUp delay={0.2}>
               <Magnetic>
                 <Link href="/signup" className={`btn-primary btn-lg ${dark?"btn-primary-dark":"btn-primary-light"}`}>

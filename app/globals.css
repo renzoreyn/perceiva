@@ -182,3 +182,21 @@
   0% { opacity: 0; transform: scale(0.95); }
   100% { opacity: 1; transform: scale(1); }
 }
+
+/* shadcn chart color tokens */
+@layer base {
+  :root {
+    --chart-1: 211 100% 44%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 339 90% 58%;
+    --chart-4: 33 95% 55%;
+    --chart-5: 262 80% 60%;
+  }
+  .dark {
+    --chart-1: 211 100% 60%;
+    --chart-2: 142 71% 55%;
+    --chart-3: 339 90% 65%;
+    --chart-4: 33 95% 62%;
+    --chart-5: 262 80% 70%;
+  }
+}

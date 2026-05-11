@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     return NextResponse.json(rates, {
       headers: { "Cache-Control": "public, max-age=300, stale-while-revalidate=60" },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch rates" }, { status: 500 });
   }
 }
